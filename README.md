@@ -8,7 +8,7 @@
 - 위젯에 **자체 설정이 내장**되어 있어 다양한 커스터마이징이 가능합니다.
 <div>
 <img width="170" src="https://user-images.githubusercontent.com/63099769/103260907-c4e96a00-49e2-11eb-99a0-bc9bca15bb2e.jpg" hspace="20">
-<img width="360" src="https://user-images.githubusercontent.com/63099769/103262265-cec19c00-49e7-11eb-9853-c13b3d945ca8.jpg"><br>
+<img width="360" src="https://user-images.githubusercontent.com/63099769/103262265-cec19c00-49e7-11eb-9853-c13b3d945ca8.jpg" vspace="40"><br>
 <img width="266" src="https://user-images.githubusercontent.com/63099769/103261260-3bd33280-49e4-11eb-81bb-a36d8214ef6d.png" hspace="20">
 <img width="266" src="https://user-images.githubusercontent.com/63099769/103261262-3d045f80-49e4-11eb-9715-6c76a5279b91.png">
 </div>
@@ -24,4 +24,5 @@
 
 ## Support / Donate
 코로나 알파 위젯에 대해 궁금증이 있으시거나, 제작자에게 커피를 선물해주고 싶으신가요? 🥂
+
 [Scriptable Lab 디스코드](https://discord.gg/BCP2S7BdaC)에 참여하세요! 더 많은 위젯을 만나보실 수 있습니다 😁
