@@ -1,7 +1,7 @@
 // Variables used by Scriptable.
 // These must be at the very top of the file. Do not edit.
 // icon-color: deep-gray; icon-glyph: vial;
-// Corona Alpha v1.0 - by unvsDev
+// Corona Alpha v1.0.1 - by unvsDev
 // Full-fledged Covid-19 Information for Korea
 // Learn more: https://github.com/unvsDev/corona-alpha
 
@@ -228,7 +228,10 @@ if(aftData.alert == 1){ // 확진자 증가폭 알림
   } else {
     var prevData = JSON.parse(fm.readString(prevPath))
     var diff = currentCnt - prevData.confirmed
-    if(diff >= aftData.limit) { 
+    if(today.getDate() != prevData.date){
+      await sendNotification("코로나19 어제 확진자 최소 " + prevData.confirmed + "명", "손씻기 생활화, 어디서든 마스크 착용을 통해 코로나를 이겨내요! 😎")
+      await fm.writeString(prevPath, JSON.stringify({"date":today.getDate(), "hour":today.getHours(), "confirmed":0}))
+    } else if((diff >= aftData.limit) && (9 <= today.getHours() <= 23)) {
       await sendNotification("코로나19 확진자 +" + diff + "명", "현재까지 총 확진자는 " + currentCnt + "명입니다.\n손씻기 생활화, 어디서든 마스크 착용을 통해 코로나를 이겨내요! 😎")
       await writeCovidReport()
     }
@@ -245,8 +248,8 @@ if(aftData.alert == 2){ // 매시간 확진자 알림
     var lastHour = prevData.hour
     if(today.getDate() != lastDate){
       await sendNotification("코로나19 어제 확진자 최소 " + prevData.confirmed + "명", "손씻기 생활화, 어디서든 마스크 착용을 통해 코로나를 이겨내요! 😎")
-      await writeCovidReport()
-    }else if(today.getHours() != lastHour){
+      await fm.writeString(prevPath, JSON.stringify({"date":today.getDate(), "hour":today.getHours(), "confirmed":0}))
+    }else if(((today.getHours() - lastHour) >= aftData.hour) && (9 <= today.getHours() <= 23)){
       var diff = currentCnt - prevData.confirmed
       await sendNotification("코로나19 " + today.getHours() + "시 기준 +" + diff + "명", "현재까지 총 확진자는 " + currentCnt + "명입니다.\n손씻기 생활화, 어디서든 마스크 착용을 통해 코로나를 이겨내요! 😎")
       await writeCovidReport()
@@ -347,7 +350,7 @@ function addComma(number) {
   return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
-cwidget.refreshAfterDate = new Date(Date.now() + 1000 * 90) // Refresh every 90 Second
+cwidget.refreshAfterDate = new Date(Date.now() + 1000 * 180) // Refresh every 180 Second
 
 cwidget.url = sourceURL
 cwidget.setPadding(12, 12, 12, 12)
