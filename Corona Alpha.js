@@ -1,13 +1,22 @@
 // Variables used by Scriptable.
 // These must be at the very top of the file. Do not edit.
 // icon-color: deep-gray; icon-glyph: vial;
-// Corona Alpha v1.0.2 - by unvsDev
+// Corona Alpha v1.1.1 - by unvsDev
 // Full-fledged Covid-19 Information for Korea
 // Learn more: https://github.com/unvsDev/corona-alpha
+
+// v1.1.1 변경사항
+// 이제 총합을 표시하는 기준을 설정할 수 있습니다.
+// 전체적인 UI를 개선했습니다.
+
+// 본 위젯은 코로나 라이브의 API를 이용해 정보를 수집합니다. 이는 민간이 취합한 집계가 일부 포함되어 있으므로 본 위젯의 정보를 공식적인 근거 자료로 활용하는 것은 부적절할 수 있습니다. 또한 본 위젯의 정보를 이용하거나 공유해 문제가 발생할 시 해당 책임은 전적으로 사용자에게 있음을 알려드립니다.
+
+// 코로나 알파 위젯은 외부로의 무단 재배포 및 재공유가 엄격히 금지되어 있습니다. 위젯은 공식 깃허브를 통해 공유하실 수 있습니다.
 
 const dataURL = "https://apiv2.corona-live.com/stats.json"
 const data = await new Request(dataURL).loadJSON()
 const sourceURL = "https://corona-live.com"
+const version = 111
 
 const today = new Date()
 
@@ -15,7 +24,9 @@ const orgData = {
   region : 0,
   alert : 0,
   limit : 100,
-  hour : 1
+  hour : 1,
+  link : "live",
+  total : "total"
 }
 
 const regionsArr = ['서울', '부산', '인천', '대구', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '경북', '경남', '전북', '전남', '제주']
@@ -39,8 +50,24 @@ if(!fm.fileExists(prefPath)){
 
 if(config.runsInApp) {
   var usrData = JSON.parse(fm.readString(prefPath))
+  
+  // Auto Update Preferences
+  var cnt = 0
+  for(i in orgData){
+    if(usrData[i] == undefined){
+      cnt = cnt + 1
+      usrData[i] = orgData[i]
+      console.log("[!] 초기값 업데이트 중... (" + cnt + ")")
+    }
+  }
+  
   let menu = new UITable()
   menu.showSeparators = true
+  
+  const title = new UITableRow()
+  title.dismissOnSelect = false
+  title.addText("Corona Alpha v1.1.1", "대한민국 최대 iOS 코로나 위젯을 즐겨 보세요!")
+  menu.addRow(title)
   
   const option1 = new UITableRow()
   option1.dismissOnSelect = false
@@ -138,11 +165,58 @@ if(config.runsInApp) {
   }
   
   const option5 = new UITableRow()
-  option5.dismissOnSelect = true
-  option5.addText("🔥 데이터 초기화")
+  option5.dismissOnSelect = false
+  option5.addText("🦋 총합 표시 기준 설정")
   menu.addRow(option5)
   
   option5.onSelect = async () => {
+    var currentTot
+    if(usrData.total == "total") { currentTot = "전체 총합 표시" }
+    else if(usrData.total == "prev") { currentTot = "어제 총합만 표시" }
+    let totAlert = new Alert()
+    totAlert.title = "총합 표시 기준 설정"
+    totAlert.message = "확진지 총합을 표시할 기준을 선택하세요.\n현재 설정값은 \"" + currentTot + "\"입니다."
+    totAlert.addAction("전체 총합 표시")
+    totAlert.addAction("어제 총합만 표시")
+    totAlert.addCancelAction("취소")
+    
+    let response = await totAlert.present()
+    
+    if(response == 0){ usrData.total = "total" }
+    else if(response == 1){ usrData.total = "prev" }
+  }
+  
+  const option6 = new UITableRow()
+  option6.dismissOnSelect = false
+  option6.addText("🔗 위젯 바로가기 설정")
+  menu.addRow(option6)
+  
+  option6.onSelect = async () => {
+    var currentLink
+    if(usrData.link == "live") { currentLink = "코로나 라이브 사이트" }
+    else if(usrData.link == "naver") { currentLink = "네이버 QR 체크인" }
+    else if(usrData.link == "kakao") { currentLink = "카카오 QR 체크인" }
+    let shortcutAlert = new Alert()
+    shortcutAlert.title = "위젯 바로가기 설정"
+    shortcutAlert.message = "위젯을 클릭했을 때 원하는 링크로 빠르게 이동할 수 있습니다.\n현재 설정값은 \"" + currentLink + "\"입니다."
+    shortcutAlert.addAction("코로나 라이브 사이트")
+    shortcutAlert.addAction("네이버 QR 체크인")
+    shortcutAlert.addAction("카카오 QR 체크인")
+    shortcutAlert.addCancelAction("취소")
+    
+    let response = await shortcutAlert.present()
+    
+    if(response == 0){ usrData.link = "live" }
+    else if(response == 1){ usrData.link = "naver" }
+    else if(response == 2){ usrData.link = "kakao" }
+  }
+  
+  const option7 = new UITableRow()
+  option7.dismissOnSelect = true
+  option7.addText("🔥 데이터 초기화")
+  menu.addRow(option7)
+  
+  option7.onSelect = async () => {
     resetmode = 1
     let resetAlert = new Alert()
     resetAlert.title = "정말요..? 😭"
@@ -158,13 +232,22 @@ if(config.runsInApp) {
     }
   }
   
-  const option6 = new UITableRow()
-  option6.dismissOnSelect = false
-  option6.addText("🎄 Github")
-  menu.addRow(option6)
+  const option8 = new UITableRow()
+  option8.dismissOnSelect = false
+  option8.addText("🎄 Github")
+  menu.addRow(option8)
   
-  option6.onSelect = () => {
+  option8.onSelect = () => {
     Safari.openInApp("https://github.com/unvsDev/corona-alpha", false)
+  }
+  
+  const option9 = new UITableRow()
+  option9.dismissOnSelect = false
+  option9.addText("🙌 Scriptable Lab", "더 많은 위젯을 알아보고, 개발자와 소통하실 수 있습니다.")
+  menu.addRow(option9)
+  
+  option9.onSelect = () => {
+    Safari.openInApp("https://discord.gg/BCP2S7BdaC", false)
   }
   
   await menu.present(false)
@@ -174,6 +257,18 @@ if(config.runsInApp) {
 
 if(resetmode){ return 0 }
 
+// Script Auto Update
+const uServer = "https://github.com/unvsDev/corona-alpha/raw/main/VERSION"
+const cServer = "https://github.com/unvsDev/corona-alpha/raw/main/Corona%20Alpha.js"
+var minVer = parseInt(await new Request(uServer).loadString())
+if(version < minVer){
+  var code = await new Request(cServer).loadString()
+  fm.writeString(fm.joinPath(fm.documentsDirectory(), Script.name() + ".js"), code)
+  return 0
+}
+
+fm.downloadFileFromiCloud(prefPath)
+fm.downloadFileFromiCloud(prevPath)
 var aftData = JSON.parse(fm.readString(prefPath))
 
 // Getting Data
@@ -286,7 +381,7 @@ cStack1.addSpacer()
 
 let liveLabel = cStack1.addText(addComma(currentCnt))
 liveLabel.textColor = new Color("#fff")
-liveLabel.font = Font.boldMonospacedSystemFont(27)
+liveLabel.font = Font.lightMonospacedSystemFont(26)
 
 let cStack2 = cwidget.addStack()
 cStack2.layoutHorizontally()
@@ -308,31 +403,43 @@ cStack2.addSpacer()
 
 let localLabel = cStack2.addText(addComma(regionCnt))
 localLabel.textColor = new Color("#fff")
-localLabel.font = Font.boldMonospacedSystemFont(27)
+localLabel.font = Font.lightMonospacedSystemFont(26)
 
 let cStack3 = cwidget.addStack()
 cStack3.layoutHorizontally()
 cStack3.centerAlignContent()
 
-let inStack3 = cStack3.addStack()
-inStack3.layoutVertically()
-inStack3.centerAlignContent()
+if(aftData.total == "total"){
+  let inStack3 = cStack3.addStack()
+  inStack3.layoutVertically()
+  inStack3.centerAlignContent()
+  
+  let totalTitle = inStack3.addText("총합")
+  totalTitle.textColor = new Color("#fff")
+  totalTitle.font = Font.blackMonospacedSystemFont(10)
+  
+  let totalCompare = inStack3.addText(getGapStr(totalGap))
+  totalCompare.textColor = getGapColor(totalGap)
+  totalCompare.font = Font.boldMonospacedSystemFont(8)
+  
+  cStack3.addSpacer()
+  
+  let totalLabel = cStack3.addText(addComma(totalCnt))
+  totalLabel.textColor = new Color("#fff")
+  totalLabel.font = Font.lightMonospacedSystemFont(26)
+} else if(aftData.total == "prev"){
+  let totalTitle = cStack3.addText("어제")
+  totalTitle.textColor = new Color("#fff")
+  totalTitle.font = Font.blackMonospacedSystemFont(10)
+  
+  cStack3.addSpacer()
+  
+  let totalLabel = cStack3.addText(addComma(totalGap))
+  totalLabel.textColor = new Color("#fff")
+  totalLabel.font = Font.lightMonospacedSystemFont(26)
+}
 
-let totalTitle = inStack3.addText("총합")
-totalTitle.textColor = new Color("#fff")
-totalTitle.font = Font.blackMonospacedSystemFont(10)
-
-let totalCompare = inStack3.addText(getGapStr(totalGap))
-totalCompare.textColor = getGapColor(totalGap)
-totalCompare.font = Font.boldMonospacedSystemFont(8)
-
-cStack3.addSpacer()
-
-let totalLabel = cStack3.addText(addComma(totalCnt))
-totalLabel.textColor = new Color("#fff")
-totalLabel.font = Font.boldMonospacedSystemFont(27)
-
-cwidget.addSpacer(5)
+cwidget.addSpacer(6)
 
 function formatTime(date) {
     let df = new DateFormatter()
@@ -352,7 +459,9 @@ function addComma(number) {
 
 cwidget.refreshAfterDate = new Date(Date.now() + 1000 * 180) // Refresh every 180 Second
 
-cwidget.url = sourceURL
+if(aftData.link == "live") { cwidget.url = "https://corona-live.com" }
+else if(aftData.link == "naver") { cwidget.url = "https://nid.naver.com/login/privacyQR" }
+else if(aftData.link == "kakao") { cwidget.url = "kakaotalk://con/web?url=https://accounts.kakao.com/qr_check_in" }
 cwidget.setPadding(12, 12, 12, 12)
 cwidget.backgroundColor = new Color("#333")
 cwidget.presentSmall()
