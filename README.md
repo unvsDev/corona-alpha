@@ -1,16 +1,16 @@
 # Corona Alpha
 대한민국의 **코로나19 확진자 정보**를, **아이폰에서도 한 눈에** 만나 보세요.
 
+**대한민국 최대 iOS 코로나 위젯**을 지금 바로 즐겨 보세요!
+
 ## Widget
 - **당일 실시간 확진자 및 전체 확진자**와, **대한민국 내 각종 시/도에서의 확진자 수**를 표시합니다.
 - **어제 대비 증감** 또한 보여주며, 이 모든 정보를 최대한 **직관적이고 알아보기 쉬운 레이아웃**으로 나타냅니다.
 - 확진자가 일정 값 이상으로 증가하거나, 정해진 매 시간마다 **확진자 알림을 푸시하도록 설정**할 수 있습니다. 
 - 위젯에 **자체 설정이 내장**되어 있어 다양한 커스터마이징이 가능합니다.
 <div>
-<img width="170" src="https://user-images.githubusercontent.com/63099769/103260907-c4e96a00-49e2-11eb-99a0-bc9bca15bb2e.jpg" hspace="20">
-<img width="360" src="https://user-images.githubusercontent.com/63099769/103262265-cec19c00-49e7-11eb-9853-c13b3d945ca8.jpg" vspace="40"><br>
-<img width="266" src="https://user-images.githubusercontent.com/63099769/103261260-3bd33280-49e4-11eb-81bb-a36d8214ef6d.png" hspace="20">
-<img width="266" src="https://user-images.githubusercontent.com/63099769/103261262-3d045f80-49e4-11eb-9715-6c76a5279b91.png">
+<img width="266" src="https://user-images.githubusercontent.com/63099769/105147558-b525f700-5b44-11eb-8b77-652e9f0b7a89.jpeg"><br>
+<img width="266" src="https://user-images.githubusercontent.com/63099769/105147560-b6572400-5b44-11eb-9146-93c71f2ce0db.png">
 </div>
 
 ## How to Install
