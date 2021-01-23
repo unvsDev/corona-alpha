@@ -1,9 +1,13 @@
 // Variables used by Scriptable.
 // These must be at the very top of the file. Do not edit.
 // icon-color: deep-gray; icon-glyph: vial;
-// Corona Alpha v1.2 - by unvsDev
+// Corona Alpha v1.2.1 - by unvsDev
 // Full-fledged Covid-19 Information for Korea
 // Learn more: https://github.com/unvsDev/corona-alpha
+
+// v1.2.1 변경사항
+// 초기 설정이 원활하게 이루어지지 않을 수 있는 문제 수정
+// 버그 수정 및 퍼포먼스 개선
 
 // v1.2 변경사항
 // 초기 설정을 통해 언어 및 데이터 저장 방식을 설정할 수 있습니다.
@@ -23,7 +27,7 @@ const dataURL = "https://apiv2.corona-live.com/stats.json"
 const data = await new Request(dataURL).loadJSON()
 const key = "https://gist.github.com/unvsDev/7c1a65545bdf5ef869db4b3764574195/raw/532fa49460a9b59234d3a40983a77231a9a8dc75/Key"
 const sourceURL = "https://corona-live.com"
-const version = 120
+const version = 121
 
 const today = new Date()
 
@@ -50,6 +54,9 @@ var resetmode = 0
 let tempFm = FileManager.local()
 let tempPath = tempFm.joinPath(tempFm.documentsDirectory(), "calphaConfig.txt")
 if(!tempFm.fileExists(tempPath)){
+  if(config.runsInWidget){
+    throw new Error("앱 내에서 위젯을 1회 실행해 주세요. 초기 설정이 추가로 필요합니다.")
+  }
   var dataPath = ""
   var language = ""
   
@@ -347,14 +354,14 @@ if(config.runsInApp) {
 
     const optionSecret = new UITableRow()
     optionSecret.dismissOnSelect = false
-    optionSecret.addText("💵 카카오페이로 기부하기", "위젯이 마음에 드시나요? 위젯 개발에 도움을 주실 수 있습니다!")
+    optionSecret.addText("💵 카카오페이로 후원하기", "위젯이 마음에 드시나요? 위젯 개발에 도움을 주실 수 있습니다!")
     menu.addRow(optionSecret)
     
     optionSecret.onSelect = async () => {
       var alert = new Alert()
       alert.title = "잠깐! 계속하기 전 확인하세요."
-      alert.message = "기부해주셔서 감사합니다. 코로나 알파를 원본이 아닌 다른 제공처에서 설치했을 경우에는 링크가 손상되었을 수 있으므로 꼭 공식 버전을 설치해주세요!"
-      alert.addAction("기부 링크로 이동하기")
+      alert.message = "후원해주셔서 감사합니다. 코로나 알파를 원본이 아닌 다른 제공처에서 설치했을 경우에는 링크가 손상되었을 수 있으므로 꼭 공식 버전을 설치해주세요!"
+      alert.addAction("후원 링크로 이동하기")
       alert.addCancelAction("취소")
       var response = await alert.present()
       if(response != -1){
