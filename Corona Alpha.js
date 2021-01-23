@@ -1,11 +1,11 @@
 // Variables used by Scriptable.
 // These must be at the very top of the file. Do not edit.
 // icon-color: deep-gray; icon-glyph: vial;
-// Corona Alpha v1.2.1 - by unvsDev
+// Corona Alpha v1.2.2 - by unvsDev
 // Full-fledged Covid-19 Information for Korea
 // Learn more: https://github.com/unvsDev/corona-alpha
 
-// v1.2.1 변경사항
+// v1.2.2 변경사항
 // 초기 설정이 원활하게 이루어지지 않을 수 있는 문제 수정
 // 버그 수정 및 퍼포먼스 개선
 
@@ -27,7 +27,7 @@ const dataURL = "https://apiv2.corona-live.com/stats.json"
 const data = await new Request(dataURL).loadJSON()
 const key = "https://gist.github.com/unvsDev/7c1a65545bdf5ef869db4b3764574195/raw/532fa49460a9b59234d3a40983a77231a9a8dc75/Key"
 const sourceURL = "https://corona-live.com"
-const version = 121
+const version = 122
 
 const today = new Date()
 
@@ -136,7 +136,7 @@ if(config.runsInApp) {
   
   const title = new UITableRow()
   title.dismissOnSelect = false
-  title.addText("Corona Alpha v1.2", language == "ko" ? "대한민국 1등 iOS 코로나 위젯을 즐겨 보세요." : "Developed by unvsDev")
+  title.addText("Corona Alpha v1.2.2", language == "ko" ? "대한민국 1등 iOS 코로나 위젯을 즐겨 보세요." : "Developed by unvsDev")
   menu.addRow(title)
   
   const option1 = new UITableRow()
