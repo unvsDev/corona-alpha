@@ -1,19 +1,9 @@
 // Variables used by Scriptable.
 // These must be at the very top of the file. Do not edit.
-// icon-color: deep-gray; icon-glyph: vial;
-// Corona Alpha v1.2.2 - by unvsDev
+// icon-color: deep-gray; icon-glyph: asterisk;
+// Corona Alpha v1.2.3 - by unvsDev
 // Full-fledged Covid-19 Information for Korea
 // Learn more: https://github.com/unvsDev/corona-alpha
-
-// v1.2.2 변경사항
-// 초기 설정이 원활하게 이루어지지 않을 수 있는 문제 수정
-// 버그 수정 및 퍼포먼스 개선
-
-// v1.2 변경사항
-// 초기 설정을 통해 언어 및 데이터 저장 방식을 설정할 수 있습니다.
-// 영어를 완전히 지원합니다. (English full support)
-// 배경화면 설정 기능을 정식으로 추가하였습니다.
-// 버그 수정 및 퍼포먼스 개선
 
 // 아이클라우드 동기화 문제가 발생할 경우, 데이터 초기화 후 로컬 저장소에 데이터를 저장하세요.
 
@@ -27,7 +17,7 @@ const dataURL = "https://apiv2.corona-live.com/stats.json"
 const data = await new Request(dataURL).loadJSON()
 const key = "https://gist.github.com/unvsDev/7c1a65545bdf5ef869db4b3764574195/raw/532fa49460a9b59234d3a40983a77231a9a8dc75/Key"
 const sourceURL = "https://corona-live.com"
-const version = 122
+const version = 123
 
 const today = new Date()
 
@@ -53,9 +43,24 @@ var resetmode = 0
 
 let tempFm = FileManager.local()
 let tempPath = tempFm.joinPath(tempFm.documentsDirectory(), "calphaConfig.txt")
+
+if(config.runsInWidget && config.widgetFamily != "small"){
+  let errorWidget = new ListWidget()
+  let title = errorWidget.addText("이 위젯은 작은 크기에 최적화되어 있습니다.\nPlease set the widget in small size.")
+  title.font = Font.boldMonospacedSystemFont(16)
+  errorWidget.backgroundColor = new Color("#4661a3")
+  Script.setWidget(errorWidget)
+  return 0
+}
+
 if(!tempFm.fileExists(tempPath)){
   if(config.runsInWidget){
-    throw new Error("앱 내에서 위젯을 1회 실행해 주세요. 초기 설정이 추가로 필요합니다.")
+    let errorWidget = new ListWidget()
+    let title = errorWidget.addText("앱 내에서 위젯을 실행해 주세요.\nPlease run the widget in the app.")
+    title.font = Font.boldMonospacedSystemFont(16)
+    errorWidget.backgroundColor = new Color("#4661a3")
+    Script.setWidget(errorWidget)
+    return 0
   }
   var dataPath = ""
   var language = ""
@@ -136,7 +141,7 @@ if(config.runsInApp) {
   
   const title = new UITableRow()
   title.dismissOnSelect = false
-  title.addText("Corona Alpha v1.2.2", language == "ko" ? "대한민국 1등 iOS 코로나 위젯을 즐겨 보세요." : "Developed by unvsDev")
+  title.addText("Corona Alpha v1.2.3", language == "ko" ? "대한민국 1등 iOS 코로나 위젯을 즐겨 보세요." : "Developed by unvsDev")
   menu.addRow(title)
   
   const option1 = new UITableRow()
@@ -378,12 +383,20 @@ if(config.runsInApp) {
 
 if(resetmode){ return 0 }
 
+async function sendNotification(title, message){
+  let noti = new Notification()
+  noti.title = title
+  noti.body = message
+  await noti.schedule()
+}
+
 // Script Auto Update
 const uServer = "https://github.com/unvsDev/corona-alpha/raw/main/VERSION"
 const cServer = "https://github.com/unvsDev/corona-alpha/raw/main/Corona%20Alpha.js"
 var minVer = parseInt(await new Request(uServer).loadString())
 if(version < minVer){
   var code = await new Request(cServer).loadString()
+  await sendNotification("Corona Alpha", language == "ko" ? "위젯을 업데이트하는 중입니다.. 변경사항을 적용하려면 앱을 재시작하세요." : "Updating widget.. Please launch the app again.")
   fm.writeString(fm.joinPath(fm.documentsDirectory(), Script.name() + ".js"), code)
   return 0
 }
@@ -426,13 +439,6 @@ function getGapColor(number) {
 async function writeCovidReport() {
   await fm.writeString(prevPath, JSON.stringify({"date":today.getDate(), "hour":today.getHours(), "confirmed":currentCnt}))
   console.log(language == "ko" ? "[*] 로그 저장이 완료되었습니다!" : "[*] Log saved.")
-}
-
-async function sendNotification(title, message){
-  let noti = new Notification()
-  noti.title = title
-  noti.body = message
-  await noti.schedule()
 }
 
 if(aftData.alert == 1){ // 확진자 증가폭 알림
