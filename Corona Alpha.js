@@ -1,7 +1,7 @@
 // Variables used by Scriptable.
 // These must be at the very top of the file. Do not edit.
 // icon-color: deep-gray; icon-glyph: asterisk;
-// Corona Alpha v1.2.3 - by unvsDev
+// Corona Alpha v1.4.1 - by unvsDev (Minseo Kang)
 // Full-fledged Covid-19 Information for Korea
 // Learn more: https://github.com/unvsDev/corona-alpha
 
@@ -17,18 +17,20 @@ const dataURL = "https://apiv2.corona-live.com/stats.json"
 const data = await new Request(dataURL).loadJSON()
 const key = "https://gist.github.com/unvsDev/7c1a65545bdf5ef869db4b3764574195/raw/532fa49460a9b59234d3a40983a77231a9a8dc75/Key"
 const sourceURL = "https://corona-live.com"
-const version = 123
+const version = 141
 
 const today = new Date()
 
 const orgData = {
   region : 0,
+  gu : -1,
   alert : 0,
   limit : 100,
   hour : 1,
   link : "live",
   total : "total",
-  wall : ""
+  wall : "",
+  walldark : ""
 }
 
 const regionsArr = ['서울', '부산', '인천', '대구', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '경북', '경남', '전북', '전남', '제주']
@@ -39,19 +41,14 @@ const alertArr = ['끄기', '확진자 증가 알림', '매 시간마다 알림'
 
 const alertArrEn = ['Turn off', 'Alert by cases growth width', 'Alert by several hours']
 
+const guList = [['종로구','중구','용산구','성동구','광진구','동대문구','중랑구','성북구','강북구','도봉구','노원구','은평구','서대문구','마포구','양천구','강서구','구로구','금천구','영등포구','동작구','관악구','서초구','강남구','송파구','강동구'], ['중구','서구','동구','영도구','부산진구','동래구','남구','북구','강서구','해운대구','사하구','금정구','연제구','수영구','사상구','기장구']]
+
+const guSupport = [0, 1]
+
 var resetmode = 0
 
 let tempFm = FileManager.local()
 let tempPath = tempFm.joinPath(tempFm.documentsDirectory(), "calphaConfig.txt")
-
-if(config.runsInWidget && config.widgetFamily != "small"){
-  let errorWidget = new ListWidget()
-  let title = errorWidget.addText("이 위젯은 작은 크기에 최적화되어 있습니다.\nPlease set the widget in small size.")
-  title.font = Font.boldMonospacedSystemFont(16)
-  errorWidget.backgroundColor = new Color("#4661a3")
-  Script.setWidget(errorWidget)
-  return 0
-}
 
 if(!tempFm.fileExists(tempPath)){
   if(config.runsInWidget){
@@ -113,7 +110,7 @@ const prevPath = fm.joinPath(fm.documentsDirectory(), "coronaData.txt")
 if(!fm.fileExists(prefPath)){
   let alert = new Alert()
   alert.title = language == "ko" ? "환영합니다!" : "Welcome!"
-  alert.message = language == "ko" ? "대한민국 코로나19 확진자 현황을\n위젯을 통해 직관적으로 보여주는\n코로나 알파에 오신 것을 환영합니다 💜\nDeveloped by unvsDev" : "This widget shows the status of Covid-19 in South Korea with rich detail. Developed by unvsDev!"
+  alert.message = language == "ko" ? "대한민국 코로나19 확진자 현황을\n위젯을 통해 직관적으로 보여주는\n코로나 알파에 오신 것을 환영합니다 💜\nDeveloped by unvsDev (Minseo Kang)" : "This widget shows the status of Covid-19 in South Korea with rich detail. Developed by unvsDev!"
   alert.addAction(language == "ko" ? "확인" : "OK")
   await alert.present()
   fm.writeString(prefPath, JSON.stringify(orgData))
@@ -124,6 +121,14 @@ if(dataPath == "icloud" && fm.fileExists(prefPath)){
 }
 
 if(config.runsInApp) {
+  const annServer = "https://github.com/unvsDev/corona-alpha/raw/main/Announcement.txt"
+  let annPath = fm.joinPath(fm.documentsDirectory(), "annVer.txt")
+  var curAnn = fm.fileExists(annPath) ? fm.readString(annPath) : 0
+  if(version != parseInt(curAnn)){
+    await Safari.openInApp(annServer, true)
+    await fm.writeString(annPath, version.toString())
+  }
+  
   var usrData = JSON.parse(fm.readString(prefPath))
   
   // Auto Update Preferences
@@ -141,8 +146,12 @@ if(config.runsInApp) {
   
   const title = new UITableRow()
   title.dismissOnSelect = false
-  title.addText("Corona Alpha v1.2.3", language == "ko" ? "대한민국 1등 iOS 코로나 위젯을 즐겨 보세요." : "Developed by unvsDev")
+  title.addText("Corona Alpha v1.4.1", language == "ko" ? "대한민국 1등 iOS 코로나 위젯! (누르면 공지사항 표시)" : "Developed by unvsDev")
   menu.addRow(title)
+  
+  title.onSelect = () => {
+    Safari.openInApp(annServer, true)
+  }
   
   const option1 = new UITableRow()
   option1.dismissOnSelect = false
@@ -161,12 +170,50 @@ if(config.runsInApp) {
       regionMenu.addRow(regOption)
       
       regOption.onSelect = async (number) => {
-        usrData["region"] = number
-        let regAlert = new Alert()
-        regAlert.title = language == "ko" ? "라이브 지역 설정" : "Local Area set"
-        regAlert.message = language == "ko" ? "지역이 " + finalRegionArr[number] + "(으)로 설정되었습니다." : "Your local area has set to " + finalRegionArr[number] + "."
-        regAlert.addAction(language == "ko" ? "확인" : "OK")
-        await regAlert.present()
+        var isSearchGu = false
+        
+        if(guSupport.indexOf(number) != -1 && language == "ko"){
+          let guAlert = new Alert()
+          guAlert.title = "지역 범위 설정(BETA)"
+          guAlert.message = "해당하는 지역에서는 더 좁은 범위에서 코로나 확진자를 확인할 수 있습니다! 위젯에 나타낼 지역의 범위를 설정해주세요."
+          guAlert.addAction(finalRegionArr[number] + " 전체로 설정")
+          guAlert.addAction("우리 동네로 설정")
+          let guResponse = await guAlert.present()
+          if(guResponse == 1){ isSearchGu = true }
+        }
+        
+        if(isSearchGu == false){
+          usrData["region"] = number
+          usrData["gu"] = -1
+          let regAlert = new Alert()
+          regAlert.title = language == "ko" ? "라이브 지역 설정" : "Local Area set"
+          regAlert.message = language == "ko" ? "지역이 " + finalRegionArr[number] + "(으)로 설정되었습니다." : "Your local area has set to " + finalRegionArr[number] + "."
+          regAlert.addAction(language == "ko" ? "확인" : "OK")
+          await regAlert.present()
+        } else {
+          let guMenu = new UITable()
+          guMenu.showSeparators = true
+        
+          for(gu in guList[number]){
+            const guOption = new UITableRow()
+            guOption.dismissOnSelect = true
+            guOption.addText(guList[number][gu])
+            guMenu.addRow(guOption)
+            
+            guOption.onSelect = async (gucode) => {
+              usrData["region"] = number
+              usrData["gu"] = gucode
+              
+              let guSetAlert = new Alert()
+              guSetAlert.title = "라이브 지역 설정"
+              guSetAlert.message = "지역이 " + regionsArr[number] + " " + guList[number][gucode] + "(으)로 설정되었습니다."
+              guSetAlert.addAction("확인")
+              await guSetAlert.present()
+            }
+          }
+          
+          await guMenu.present()
+        }
       }
     }
     await regionMenu.present(false)
@@ -256,7 +303,7 @@ if(config.runsInApp) {
     else if(usrData.total == "prev") { currentTot = menu2 }
     let totAlert = new Alert()
     totAlert.title = language == "ko" ? "총합 표시 기준 설정" : "Total Cases Filter"
-    totAlert.message = language == "ko" ? "확진자 총합을 표시할 기준을 선택하세요.\n현재 설정값은 \"" + currentTot + "\"입니다." : "Set filter for counting total confirmed cases.\nCurrently set to " + currentTot + "."
+    totAlert.message = language == "ko" ? "확진자 총합을 표시할 기준을 선택하세요.\n현재 설정값은 \"" + currentTot + "\"입니다.\n이 옵션은 작은 크기의 위젯에만 적용됩니다." : "Set filter for counting total confirmed cases.\nCurrently set to " + currentTot + ".\nThis option only works for small size of the widget."
     totAlert.addAction(menu1)
     totAlert.addAction(menu2)
     totAlert.addCancelAction(language == "ko" ? "취소" : "Cancel")
@@ -304,12 +351,14 @@ if(config.runsInApp) {
     var alert = new Alert()
     alert.title = language == "ko" ? "배경화면 설정하기" : "Set wallpaper"
     alert.message = language == "ko" ? "적용할 배경화면의 File Bookmark 이름을 입력하세요. 빈칸으로 저장할 시 기본 색상을 불러옵니다." : "Type File Bookmark name of your wallpaper. Leave it blank to set it as default."
-    alert.addTextField("Default?", usrData.wall)
+    alert.addTextField("기본 파일 북마크 이름", usrData.wall)
+    alert.addTextField("다크모드 파일 북마크 이름(선택)", usrData.walldark)
     alert.addAction(language == "ko" ? "완료" : "OK")
     alert.addCancelAction(language == "ko" ? "취소" : "Cancel")
     var response = await alert.present()
     if(response != -1){
       usrData.wall = alert.textFieldValue(0)
+      usrData.walldark = alert.textFieldValue(1)
     }
   }
   
@@ -359,7 +408,7 @@ if(config.runsInApp) {
 
     const optionSecret = new UITableRow()
     optionSecret.dismissOnSelect = false
-    optionSecret.addText("💵 카카오페이로 후원하기", "위젯이 마음에 드시나요? 위젯 개발에 도움을 주실 수 있습니다!")
+    optionSecret.addText("💵 카카오페이로 후원하기", "위젯 개발에 도움을 주실 수 있습니다!")
     menu.addRow(optionSecret)
     
     optionSecret.onSelect = async () => {
@@ -401,11 +450,33 @@ if(version < minVer){
   return 0
 }
 
+var aprPath = fm.joinPath(fm.documentsDirectory(), "coronaApr.txt")
+var darkMode
+// Preparing Device Appearance
+if(config.runsInApp){
+  darkMode = Device.isUsingDarkAppearance()
+  // darkMode = !(Color.dynamic(Color.white(),Color.black()).red)
+  fm.writeString(aprPath, (darkMode == true ? 1 : 0).toString())
+} else if(!fm.fileExists(aprPath)){
+  darkMode = 0 // 임시 지정
+} else {
+  darkMode = parseInt(fm.readString(aprPath))
+}
+
 var aftData = JSON.parse(fm.readString(prefPath))
+var aftRegCode = aftData.region
+var aftGuCode = aftData.gu
 
 // Getting Data
 let overview = data["overview"]
-let regionData = data["current"][aftData.region.toString()]["cases"]
+let regionData = data["current"][aftRegCode.toString()]["cases"]
+
+var guData
+var isShowGu = false
+if(aftGuCode != -1){
+  isShowGu = true
+  guData = data["current"][aftRegCode.toString()]["gu"][aftGuCode.toString()]
+}
 
 var currentCnt = overview["current"][0]
 var currentGap = overview["current"][1]
@@ -483,106 +554,267 @@ if(aftData.alert == 2){ // 매시간 확진자 알림
   }
 }
 
+function formatTime(date) {
+  let df = new DateFormatter()
+  df.useNoDateStyle()
+  df.useShortTimeStyle()
+  return df.string(date)
+}
+
+var previewSize = ""
+
+if(config.runsInApp){
+  let prevAlert = new Alert()
+  prevAlert.title = language == "ko" ? "위젯 미리보기 선택" : "Widget Preview"
+  prevAlert.addAction(language == "ko" ? "작은 크기" : "Small")
+  prevAlert.addAction(language == "ko" ? "중간 크기" : "Medium")
+  prevAlert.addCancelAction(language == "ko" ? "취소" : "Cancel")
+  var prevMode = await prevAlert.present()
+  
+  if(prevMode == 0){ previewSize = "small" }
+  else if(prevMode == 1){ previewSize = "medium" }
+  else{ return 0 }
+} else if(config.widgetFamily == "small"){
+  previewSize = "small"
+} else if(config.widgetFamily == "medium"){
+  previewSize = "medium"
+} else {
+  let errorWidget = new ListWidget()
+  let title = errorWidget.addText("큰 크기의 위젯은 지원하지 않습니다.\nThis widget doesn't support big size.")
+  title.font = Font.boldMonospacedSystemFont(16)
+  errorWidget.backgroundColor = new Color("#4661a3")
+  Script.setWidget(errorWidget)
+  return 0
+}
+
 // Widget Layout
 let cwidget = new ListWidget()
 
-let title = cwidget.addText("CORONA ALPHA")
-title.textColor = new Color("#fff")
-title.font = Font.blackMonospacedSystemFont(8)
-
-cwidget.addSpacer(5)
-
-let cStack1 = cwidget.addStack()
-cStack1.layoutHorizontally()
-cStack1.centerAlignContent()
-
-let inStack1 = cStack1.addStack()
-inStack1.layoutVertically()
-inStack1.centerAlignContent()
-
-let liveTitle = inStack1.addText(language == "ko" ? "라이브" : "Live")
-liveTitle.textColor = new Color("#fff")
-liveTitle.font = Font.blackMonospacedSystemFont(10)
-
-let liveCompare = inStack1.addText(getGapStr(currentGap))
-liveCompare.textColor = getGapColor(currentGap)
-liveCompare.font = Font.boldMonospacedSystemFont(8)
-
-cStack1.addSpacer()
-
-let liveLabel = cStack1.addText(addComma(currentCnt))
-liveLabel.textColor = new Color("#fff")
-liveLabel.font = Font.lightMonospacedSystemFont(26)
-
-let cStack2 = cwidget.addStack()
-cStack2.layoutHorizontally()
-cStack2.centerAlignContent()
-
-let inStack2 = cStack2.addStack()
-inStack2.layoutVertically()
-inStack2.centerAlignContent()
-
-let localTitle = inStack2.addText(language == "ko" ? regionsArr[aftData.region] : regionsArrEn[aftData.region])
-localTitle.textColor = new Color("#fff")
-localTitle.font = Font.blackMonospacedSystemFont(10)
-
-let localCompare = inStack2.addText(getGapStr(regionGap))
-localCompare.textColor = getGapColor(regionGap)
-localCompare.font = Font.boldMonospacedSystemFont(8)
-
-cStack2.addSpacer()
-
-let localLabel = cStack2.addText(addComma(regionCnt))
-localLabel.textColor = new Color("#fff")
-localLabel.font = Font.lightMonospacedSystemFont(26)
-
-let cStack3 = cwidget.addStack()
-cStack3.layoutHorizontally()
-cStack3.centerAlignContent()
-
-if(aftData.total == "total"){
-  let inStack3 = cStack3.addStack()
-  inStack3.layoutVertically()
-  inStack3.centerAlignContent()
+if(previewSize == "small"){
+  let title = cwidget.addText("CORONA ALPHA")
+  title.textColor = new Color("#fff")
+  title.font = Font.blackMonospacedSystemFont(8)
   
-  let totalTitle = inStack3.addText(language == "ko" ? "총합" : "Total")
+  cwidget.addSpacer(5)
+  
+  let cStack1 = cwidget.addStack()
+  cStack1.layoutHorizontally()
+  cStack1.centerAlignContent()
+  
+  let inStack1 = cStack1.addStack()
+  inStack1.layoutVertically()
+  inStack1.centerAlignContent()
+  
+  let liveTitle = inStack1.addText(language == "ko" ? "라이브" : "Live")
+  liveTitle.textColor = new Color("#fff")
+  liveTitle.font = Font.blackMonospacedSystemFont(10)
+  
+  let liveCompare = inStack1.addText(getGapStr(currentGap))
+  liveCompare.textColor = getGapColor(currentGap)
+  liveCompare.font = Font.boldMonospacedSystemFont(8)
+  
+  cStack1.addSpacer()
+  
+  let liveLabel = cStack1.addText(addComma(currentCnt))
+  liveLabel.textColor = new Color("#fff")
+  liveLabel.font = Font.lightMonospacedSystemFont(26)
+  
+  let cStack2 = cwidget.addStack()
+  cStack2.layoutHorizontally()
+  cStack2.centerAlignContent()
+  
+  let inStack2 = cStack2.addStack()
+  inStack2.layoutVertically()
+  inStack2.centerAlignContent()
+  
+  let localTitle = inStack2.addText(isShowGu ? (guList[aftRegCode][aftGuCode]) : (language == "ko" ? regionsArr[aftRegCode] : regionsArrEn[aftRegCode]))
+  localTitle.textColor = new Color("#fff")
+  localTitle.font = Font.blackMonospacedSystemFont(10)
+  
+  let localCompare = inStack2.addText(isShowGu ? getGapStr(guData[1]) : getGapStr(regionGap))
+  localCompare.textColor = isShowGu ? getGapColor(guData[1]) : getGapColor(regionGap)
+  localCompare.font = Font.boldMonospacedSystemFont(8)
+  
+  cStack2.addSpacer()
+  
+  let localLabel = cStack2.addText(isShowGu ? addComma(guData[0]) : addComma(regionCnt))
+  localLabel.textColor = new Color("#fff")
+  localLabel.font = Font.lightMonospacedSystemFont(26)
+  
+  let cStack3 = cwidget.addStack()
+  cStack3.layoutHorizontally()
+  cStack3.centerAlignContent()
+  
+  if(aftData.total == "total"){
+    let inStack3 = cStack3.addStack()
+    inStack3.layoutVertically()
+    inStack3.centerAlignContent()
+    
+    let totalTitle = inStack3.addText(language == "ko" ? "총합" : "Total")
+    totalTitle.textColor = new Color("#fff")
+    totalTitle.font = Font.blackMonospacedSystemFont(10)
+    
+    let totalCompare = inStack3.addText(getGapStr(totalGap))
+    totalCompare.textColor = getGapColor(totalGap)
+    totalCompare.font = Font.boldMonospacedSystemFont(8)
+    
+    cStack3.addSpacer()
+    
+    let totalLabel = cStack3.addText(addComma(totalCnt))
+    totalLabel.textColor = new Color("#fff")
+    totalLabel.font = Font.lightMonospacedSystemFont(26)
+  } else if(aftData.total == "prev"){
+    let totalTitle = cStack3.addText(language == "ko" ? "어제" : "Prev")
+    totalTitle.textColor = new Color("#fff")
+    totalTitle.font = Font.blackMonospacedSystemFont(10)
+    
+    cStack3.addSpacer()
+    
+    let totalLabel = cStack3.addText(addComma(totalGap))
+    totalLabel.textColor = new Color("#fff")
+    totalLabel.font = Font.lightMonospacedSystemFont(26)
+  }
+  
+  cwidget.addSpacer(6)
+  
+  let updateLabel = cwidget.addText(language == "ko" ? "업데이트: " + formatTime(today) : "Updated: " + formatTime(today))
+  updateLabel.textColor = new Color("#fff")
+  updateLabel.font = Font.systemFont(8)
+  updateLabel.textOpacity = 0.7
+  
+} else if(previewSize == "medium"){
+  cwidget.addSpacer(2)
+  
+  let topStack = cwidget.addStack()
+  topStack.layoutHorizontally()
+  
+  let title = topStack.addText("CORONA ALPHA")
+  title.textColor = new Color("#fff")
+  title.font = Font.blackMonospacedSystemFont(8)
+  
+  topStack.addSpacer()
+  
+  let updateLabel = topStack.addText(language == "ko" ? "업데이트: " + formatTime(today) : "Updated: " + formatTime(today))
+  updateLabel.textColor = new Color("#fff")
+  updateLabel.font = Font.systemFont(8)
+  updateLabel.textOpacity = 0.7
+  
+  cwidget.addSpacer(20)
+  
+  let mainStack = cwidget.addStack()
+  mainStack.layoutHorizontally()
+  
+  let liveStack = mainStack.addStack()
+  liveStack.layoutVertically()
+  
+  let inStack1 = liveStack.addStack()
+  inStack1.layoutHorizontally()
+  
+  inStack1.addSpacer()
+  
+  let liveTitle = inStack1.addText(language == "ko" ? "라이브" : "Live")
+  liveTitle.textColor = new Color("#fff")
+  liveTitle.font = Font.blackMonospacedSystemFont(12)
+  
+  inStack1.addSpacer()
+  
+  let inStack4 = liveStack.addStack()
+  inStack4.layoutHorizontally()
+  
+  inStack4.addSpacer()
+  
+  let liveLabel = inStack4.addText(addComma(currentCnt))
+  liveLabel.textColor = new Color("#fff")
+  liveLabel.font = Font.ultraLightMonospacedSystemFont(45)
+  
+  inStack4.addSpacer()
+  
+  let inStack7 = liveStack.addStack()
+  inStack7.layoutHorizontally()
+  
+  inStack7.addSpacer()
+  
+  let liveCompare = inStack7.addText(getGapStr(currentGap))
+  liveCompare.textColor = getGapColor(currentGap)
+  liveCompare.font = Font.lightMonospacedSystemFont(12)
+  liveCompare.centerAlignText()
+  
+  inStack7.addSpacer()
+  
+  let localStack = mainStack.addStack()
+  localStack.layoutVertically()
+  
+  let inStack2 = localStack.addStack()
+  inStack2.layoutHorizontally()
+  
+  inStack2.addSpacer()
+  
+  let localTitle = inStack2.addText(isShowGu ? (guList[aftRegCode][aftGuCode]) : (language == "ko" ? regionsArr[aftRegCode] : regionsArrEn[aftRegCode]))
+  localTitle.textColor = new Color("#fff")
+  localTitle.font = Font.blackMonospacedSystemFont(12)
+  
+  inStack2.addSpacer()
+  
+  let inStack5 = localStack.addStack()
+  inStack5.layoutHorizontally()
+  
+  inStack5.addSpacer()
+  
+  let localLabel = inStack5.addText(isShowGu ? addComma(guData[0]) : addComma(regionCnt))
+  localLabel.textColor = new Color("#fff")
+  localLabel.font = Font.ultraLightMonospacedSystemFont(45)
+  
+  inStack5.addSpacer()
+  
+  let inStack8 = localStack.addStack()
+  inStack8.layoutHorizontally()
+  
+  inStack8.addSpacer()
+  
+  let localCompare = inStack8.addText(isShowGu ? getGapStr(guData[1]) : getGapStr(regionGap))
+  localCompare.textColor = isShowGu ? getGapColor(guData[1]) : getGapColor(regionGap)
+  localCompare.font = Font.lightMonospacedSystemFont(12)
+  
+  inStack8.addSpacer()
+  
+  let totalStack = mainStack.addStack()
+  totalStack.layoutVertically()
+  
+  let inStack3 = totalStack.addStack()
+  inStack3.layoutHorizontally()
+  
+  inStack3.addSpacer()
+  
+  let totalTitle = inStack3.addText(language == "ko" ? "어제" : "Prev")
   totalTitle.textColor = new Color("#fff")
-  totalTitle.font = Font.blackMonospacedSystemFont(10)
+  totalTitle.font = Font.blackMonospacedSystemFont(12)
   
-  let totalCompare = inStack3.addText(getGapStr(totalGap))
-  totalCompare.textColor = getGapColor(totalGap)
-  totalCompare.font = Font.boldMonospacedSystemFont(8)
+  inStack3.addSpacer()
   
-  cStack3.addSpacer()
+  let inStack6 = totalStack.addStack()
+  inStack6.layoutHorizontally()
   
-  let totalLabel = cStack3.addText(addComma(totalCnt))
+  inStack6.addSpacer()
+  
+  let totalLabel = inStack6.addText(addComma(totalGap))
   totalLabel.textColor = new Color("#fff")
-  totalLabel.font = Font.lightMonospacedSystemFont(26)
-} else if(aftData.total == "prev"){
-  let totalTitle = cStack3.addText(language == "ko" ? "어제" : "Prev")
-  totalTitle.textColor = new Color("#fff")
-  totalTitle.font = Font.blackMonospacedSystemFont(10)
+  totalLabel.font = Font.ultraLightMonospacedSystemFont(45)
   
-  cStack3.addSpacer()
+  inStack6.addSpacer()
   
-  let totalLabel = cStack3.addText(addComma(totalGap))
-  totalLabel.textColor = new Color("#fff")
-  totalLabel.font = Font.lightMonospacedSystemFont(26)
+  let inStack9 = totalStack.addStack()
+  inStack9.layoutHorizontally()
+  
+  inStack9.addSpacer()
+  
+  let totalCompare = inStack9.addText(addComma(totalCnt))
+  totalCompare.textColor = new Color("#639cd4")
+  totalCompare.font = Font.lightMonospacedSystemFont(12)
+    
+  inStack9.addSpacer()
+  
+  cwidget.addSpacer()
 }
-
-cwidget.addSpacer(6)
-
-function formatTime(date) {
-    let df = new DateFormatter()
-    df.useNoDateStyle()
-    df.useShortTimeStyle()
-    return df.string(date)
-}
-
-let updateLabel = cwidget.addText(language == "ko" ? "업데이트: " + formatTime(today) : "Updated: " + formatTime(today))
-updateLabel.textColor = new Color("#fff")
-updateLabel.font = Font.systemFont(8)
-updateLabel.textOpacity = 0.7
 
 function addComma(number) {
   return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -597,7 +829,17 @@ cwidget.setPadding(12, 12, 12, 12)
 if(aftData.wall == ""){
   cwidget.backgroundColor = new Color("#333")
 } else {
-  cwidget.backgroundImage = fm.readImage(fm.bookmarkedPath(aftData.wall))
+  if(darkMode){
+    try{
+      cwidget.backgroundImage = fm.readImage(fm.bookmarkedPath(aftData.walldark))
+    }catch(e){
+      cwidget.backgroundImage = fm.readImage(fm.bookmarkedPath(aftData.wall))
+    }
+  } else {
+    cwidget.backgroundImage = fm.readImage(fm.bookmarkedPath(aftData.wall))
+  }
 }
-cwidget.presentSmall()
+
+if(previewSize == "small"){ cwidget.presentSmall() }
+else if(previewSize == "medium"){ cwidget.presentMedium() }
 Script.complete()
