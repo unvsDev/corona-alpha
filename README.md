@@ -15,7 +15,7 @@
 - **한국어와 영어**를 완벽하게 지원합니다.
 <div>
 <img width="266" src="https://user-images.githubusercontent.com/63099769/105147558-b525f700-5b44-11eb-8b77-652e9f0b7a89.jpeg"><br>
-<img width="266" src="https://user-images.githubusercontent.com/63099769/106144374-741e8a00-61b7-11eb-8ffc-9adf7ca48120.png">
+<img width="266" src="https://user-images.githubusercontent.com/63099769/106149878-16da0700-61be-11eb-993a-063649f73b27.png">
 </div>
 
 ## How to Install
