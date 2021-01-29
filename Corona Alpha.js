@@ -1,7 +1,7 @@
 // Variables used by Scriptable.
 // These must be at the very top of the file. Do not edit.
 // icon-color: deep-gray; icon-glyph: asterisk;
-// Corona Alpha v1.4.1 - by unvsDev (Minseo Kang)
+// Corona Alpha v1.4.2 - by unvsDev (Minseo Kang)
 // Full-fledged Covid-19 Information for Korea
 // Learn more: https://github.com/unvsDev/corona-alpha
 
@@ -17,7 +17,7 @@ const dataURL = "https://apiv2.corona-live.com/stats.json"
 const data = await new Request(dataURL).loadJSON()
 const key = "https://gist.github.com/unvsDev/7c1a65545bdf5ef869db4b3764574195/raw/532fa49460a9b59234d3a40983a77231a9a8dc75/Key"
 const sourceURL = "https://corona-live.com"
-const version = 141
+const version = 142
 
 const today = new Date()
 
@@ -96,6 +96,29 @@ if(!tempFm.fileExists(tempPath)){
 var configData = tempFm.readString(tempPath)
 var dataPath = configData.split(",")[1]
 var language = configData.split(",")[0]
+var alertActivator = configData.split(",")[2]
+
+if(alertActivator != "OK"){
+  try{
+    await sendNotification("Corona Alpha", "알림 기능이 활성화되었습니다!")
+    tempFm.writeString(tempPath, language + "," + dataPath + ",OK")
+  }catch(e){
+    let errorWidget = new ListWidget()
+    let title = errorWidget.addText("설정에서 알림을 활성화한 뒤 다시 시도해 주세요.\nPlease activate alert in settings.")
+    title.font = Font.boldMonospacedSystemFont(16)
+    errorWidget.backgroundColor = new Color("#4661a3")
+    Script.setWidget(errorWidget)
+    
+    if(config.runsInApp){
+      let alert = new Alert()
+      alert.title = language == "ko" ? "오류" : "Error"
+      alert.message = language == "ko" ? "설정에서 알림을 활성화한 뒤 다시 시도해 주세요." : "Please activate alert in settings."
+      alert.addAction(language == "ko" ? "확인" : "OK")
+      await alert.present()
+    }
+    return 0
+  }
+}
 
 var fm
 if(dataPath = "icloud"){
@@ -146,7 +169,7 @@ if(config.runsInApp) {
   
   const title = new UITableRow()
   title.dismissOnSelect = false
-  title.addText("Corona Alpha v1.4.1", language == "ko" ? "대한민국 1등 iOS 코로나 위젯! (누르면 공지사항 표시)" : "Developed by unvsDev")
+  title.addText("Corona Alpha v1.4.2", language == "ko" ? "대한민국 1등 iOS 코로나 위젯! (누르면 공지사항 표시)" : "Developed by unvsDev")
   menu.addRow(title)
   
   title.onSelect = () => {
