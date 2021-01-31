@@ -1,7 +1,7 @@
 // Variables used by Scriptable.
 // These must be at the very top of the file. Do not edit.
 // icon-color: deep-gray; icon-glyph: asterisk;
-// Corona Alpha v1.4.2 - by unvsDev (Minseo Kang)
+// Corona Alpha v1.5 - by unvsDev (Minseo Kang)
 // Full-fledged Covid-19 Information for Korea
 // Learn more: https://github.com/unvsDev/corona-alpha
 
@@ -17,20 +17,22 @@ const dataURL = "https://apiv2.corona-live.com/stats.json"
 const data = await new Request(dataURL).loadJSON()
 const key = "https://gist.github.com/unvsDev/7c1a65545bdf5ef869db4b3764574195/raw/532fa49460a9b59234d3a40983a77231a9a8dc75/Key"
 const sourceURL = "https://corona-live.com"
-const version = 142
+const version = 150
 
 const today = new Date()
 
 const orgData = {
   region : 0,
   gu : -1,
+  guname : "재설정 필요",
   alert : 0,
   limit : 100,
   hour : 1,
   link : "live",
   total : "total",
   wall : "",
-  walldark : ""
+  walldark : "",
+  hidereg : 0
 }
 
 const regionsArr = ['서울', '부산', '인천', '대구', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '경북', '경남', '전북', '전남', '제주']
@@ -40,10 +42,6 @@ const regionsArrEn = ['Seoul', 'Busan', 'Incheon', 'Daegu', 'Gwangju', 'Daejeon'
 const alertArr = ['끄기', '확진자 증가 알림', '매 시간마다 알림']
 
 const alertArrEn = ['Turn off', 'Alert by cases growth width', 'Alert by several hours']
-
-const guList = [['종로구','중구','용산구','성동구','광진구','동대문구','중랑구','성북구','강북구','도봉구','노원구','은평구','서대문구','마포구','양천구','강서구','구로구','금천구','영등포구','동작구','관악구','서초구','강남구','송파구','강동구'], ['중구','서구','동구','영도구','부산진구','동래구','남구','북구','강서구','해운대구','사하구','금정구','연제구','수영구','사상구','기장구']]
-
-const guSupport = [0, 1]
 
 var resetmode = 0
 
@@ -169,7 +167,7 @@ if(config.runsInApp) {
   
   const title = new UITableRow()
   title.dismissOnSelect = false
-  title.addText("Corona Alpha v1.4.2", language == "ko" ? "대한민국 1등 iOS 코로나 위젯! (누르면 공지사항 표시)" : "Developed by unvsDev")
+  title.addText("Corona Alpha v1.5", language == "ko" ? "대한민국 1등 iOS 코로나 위젯! (누르면 공지사항 표시)" : "Developed by unvsDev")
   menu.addRow(title)
   
   title.onSelect = () => {
@@ -182,6 +180,9 @@ if(config.runsInApp) {
   menu.addRow(option1)
   
   option1.onSelect = async (number) => {
+    var guJSON = await new Request("https://github.com/unvsDev/corona-alpha/raw/main/guData.json").loadJSON()
+    var guSupport = guJSON.support
+    
     let regionMenu = new UITable()
     regionMenu.showSeparators = true
     
@@ -214,22 +215,25 @@ if(config.runsInApp) {
           regAlert.addAction(language == "ko" ? "확인" : "OK")
           await regAlert.present()
         } else {
+          var guList = guJSON[number]
+          
           let guMenu = new UITable()
           guMenu.showSeparators = true
         
-          for(gu in guList[number]){
+          for(gu in guList){
             const guOption = new UITableRow()
             guOption.dismissOnSelect = true
-            guOption.addText(guList[number][gu])
+            guOption.addText(guList[gu])
             guMenu.addRow(guOption)
             
-            guOption.onSelect = async (gucode) => {
+            guOption.onSelect = async (gu) => {
               usrData["region"] = number
-              usrData["gu"] = gucode
+              usrData["gu"] = gu
+              usrData["guname"] = guList[gu]
               
               let guSetAlert = new Alert()
               guSetAlert.title = "라이브 지역 설정"
-              guSetAlert.message = "지역이 " + regionsArr[number] + " " + guList[number][gucode] + "(으)로 설정되었습니다."
+              guSetAlert.message = "지역이 " + regionsArr[number] + " " + guList[gu] + "(으)로 설정되었습니다."
               guSetAlert.addAction("확인")
               await guSetAlert.present()
             }
@@ -320,21 +324,25 @@ if(config.runsInApp) {
   
   option5.onSelect = async () => {
     var menu1 = language == "ko" ? "전체 총합 표시" : "All time"
-    var menu2 = language == "ko" ? "어제 총합만 표시" : "Yesterday total"
+    var menu2 = language == "ko" ? "어제 총합만 표시" : "Yesterday total"  
+    var menu3 = "검역 확진자 표시"
     var currentTot
     if(usrData.total == "total") { currentTot = menu1 }
     else if(usrData.total == "prev") { currentTot = menu2 }
+    else if(usrData.total == "quar") { currentTot = menu3 }
     let totAlert = new Alert()
     totAlert.title = language == "ko" ? "총합 표시 기준 설정" : "Total Cases Filter"
     totAlert.message = language == "ko" ? "확진자 총합을 표시할 기준을 선택하세요.\n현재 설정값은 \"" + currentTot + "\"입니다.\n이 옵션은 작은 크기의 위젯에만 적용됩니다." : "Set filter for counting total confirmed cases.\nCurrently set to " + currentTot + ".\nThis option only works for small size of the widget."
     totAlert.addAction(menu1)
     totAlert.addAction(menu2)
+    if(language == "ko"){ totAlert.addAction(menu3) }
     totAlert.addCancelAction(language == "ko" ? "취소" : "Cancel")
     
     let response = await totAlert.present()
     
     if(response == 0){ usrData.total = "total" }
     else if(response == 1){ usrData.total = "prev" }
+    else if(response == 2){ usrData.total = "quar" }
   }
   
   const option6 = new UITableRow()
@@ -382,6 +390,36 @@ if(config.runsInApp) {
     if(response != -1){
       usrData.wall = alert.textFieldValue(0)
       usrData.walldark = alert.textFieldValue(1)
+    }
+  }
+  
+  if(language == "ko"){
+    const hideOption = new UITableRow()
+    hideOption.dismissOnSelect = false
+    hideOption.addText("📸 위젯 표시 지역명 숨기기")
+    menu.addRow(hideOption)
+    
+    hideOption.onSelect = async () => {
+      var menu1 = "그대로 표시하기"
+      var menu2 = "\"내 지역\"으로 표시"
+      var menu3 = "\"스위트홈\"으로 표시"
+      var currentHide
+      if(usrData.hidereg == 0) { currentHide = menu1 }
+      else if(usrData.hidereg == "내 지역") { currentHide = menu2 }
+      else if(usrData.hidereg == "스위트홈") { currentHide = menu3 }
+      let hideAlert = new Alert()
+      hideAlert.title = "위젯 표시 지역명 설정"
+      hideAlert.message = "타인에게 개인정보를 표시하지 않기 위해서는, 위젯에 표시되는 지역명을 변경할 수 있습니다.\n현재 설정값은 \"" + currentHide + "\"입니다."
+      hideAlert.addAction(menu1)
+      hideAlert.addAction(menu2)
+      hideAlert.addAction(menu3)
+      hideAlert.addCancelAction("취소")
+      
+      let response = await hideAlert.present()
+      
+      if(response == 0){ usrData.hidereg = 0 }
+      else if(response == 1){ usrData.hidereg = "내 지역" }
+      else if(response == 2){ usrData.hidereg = "스위트홈" }
     }
   }
   
@@ -494,11 +532,23 @@ var aftGuCode = aftData.gu
 let overview = data["overview"]
 let regionData = data["current"][aftRegCode.toString()]["cases"]
 
+// Gu Data
 var guData
+var guName = aftData.guname
 var isShowGu = false
 if(aftGuCode != -1){
   isShowGu = true
-  guData = data["current"][aftRegCode.toString()]["gu"][aftGuCode.toString()]
+  guData = data["current"][aftRegCode]["gu"][aftGuCode]
+}
+
+// Quarantine Data
+var quarData
+var quarCnt
+var quarGap
+if(aftData.total == "quar"){
+  quarData = data["overall"][17]["cases"]
+  quarCnt = quarData[0]
+  quarGap = quarData[1]
 }
 
 var currentCnt = overview["current"][0]
@@ -650,7 +700,7 @@ if(previewSize == "small"){
   inStack2.layoutVertically()
   inStack2.centerAlignContent()
   
-  let localTitle = inStack2.addText(isShowGu ? (guList[aftRegCode][aftGuCode]) : (language == "ko" ? regionsArr[aftRegCode] : regionsArrEn[aftRegCode]))
+  let localTitle = inStack2.addText(aftData.hidereg ? aftData.hidereg : (isShowGu ? (guName) : (language == "ko" ? regionsArr[aftRegCode] : regionsArrEn[aftRegCode])))
   localTitle.textColor = new Color("#fff")
   localTitle.font = Font.blackMonospacedSystemFont(10)
   
@@ -694,6 +744,24 @@ if(previewSize == "small"){
     cStack3.addSpacer()
     
     let totalLabel = cStack3.addText(addComma(totalGap))
+    totalLabel.textColor = new Color("#fff")
+    totalLabel.font = Font.lightMonospacedSystemFont(26)
+  } else if(aftData.total == "quar"){
+    let inStack3 = cStack3.addStack()
+    inStack3.layoutVertically()
+    inStack3.centerAlignContent()
+    
+    let totalTitle = inStack3.addText("검역")
+    totalTitle.textColor = new Color("#fff")
+    totalTitle.font = Font.blackMonospacedSystemFont(10)
+    
+    let totalCompare = inStack3.addText(getGapStr(quarGap))
+    totalCompare.textColor = getGapColor(quarGap)
+    totalCompare.font = Font.boldMonospacedSystemFont(8)
+    
+    cStack3.addSpacer()
+    
+    let totalLabel = cStack3.addText(addComma(quarCnt))
     totalLabel.textColor = new Color("#fff")
     totalLabel.font = Font.lightMonospacedSystemFont(26)
   }
@@ -772,7 +840,7 @@ if(previewSize == "small"){
   
   inStack2.addSpacer()
   
-  let localTitle = inStack2.addText(isShowGu ? (guList[aftRegCode][aftGuCode]) : (language == "ko" ? regionsArr[aftRegCode] : regionsArrEn[aftRegCode]))
+  let localTitle = inStack2.addText(aftData.hidereg ? aftData.hidereg : (isShowGu ? (guName) : (language == "ko" ? regionsArr[aftRegCode] : regionsArrEn[aftRegCode])))
   localTitle.textColor = new Color("#fff")
   localTitle.font = Font.blackMonospacedSystemFont(12)
   
