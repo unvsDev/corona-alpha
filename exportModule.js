@@ -7,8 +7,8 @@ const getData = async () => {
 
   currentCnt = overview["current"][0]
   currentGap = overview["current"][1]
-  currentGap = 1990 // Temporarily patch (2021/8/13)
   totalGap = overview["confirmed"][1]
+  totalGap = 1990 // Temporarily patch (2021/8/13)
   
   return [currentCnt, currentGap, totalGap]
 }
