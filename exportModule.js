@@ -7,26 +7,8 @@ const getData = async () => {
 
   currentCnt = overview["current"][0]
   currentGap = overview["current"][1]
-  // totalGap = overview["confirmed"][1]
+  totalGap = 1930
   
-  const dataURL2 = 'http://ncov.mohw.go.kr'
-  let webView = new WebView()
-  await webView.loadURL(dataURL2)
-
-  let covid = await webView.evaluateJavaScript(`
-      const baseSelector = 'div.mainlive_container div.liveboard_layout '
-      let date = document.querySelector(baseSelector + 'h2 span.livedate').innerText
-      let domestic = document.querySelector(baseSelector + 'div.liveNum_today_new ul li:nth-child(1) span.data').innerText
-      let overseas = document.querySelector(baseSelector + 'div.liveNum_today_new ul li:nth-child(2) span.data').innerText
-
-      completion({date, count: {
-          domestic: domestic.replace(",", ""), overseas
-      }, wpsData: WPS_data })
-  `, true)
-
-  totalGap = parseInt(covid.count.domestic) + parseInt(covid.count.overseas)
-  resDate = covid.date.replace(/\(|\)/g, '').split(',')[0]
-    
   return [currentCnt, currentGap, totalGap]
 }
 
