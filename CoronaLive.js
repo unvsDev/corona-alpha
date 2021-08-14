@@ -222,7 +222,7 @@ const fetchUpdate = async (buildnum) => {
   
   let fm2 = FileManager.iCloud()
   let wDir = `${fm2.documentsDirectory()}/${Script.name()}.js`
-  await fm.writeString(wDir, request)
+  await fm2.writeString(wDir, request)
 }
 
 const getLevelColor = (count) => {
