@@ -1,13 +1,13 @@
-let overview; var currentCnt; var currentGap; var totalGap; var resDate;
+var currentCnt; var currentGap; var totalGap;
   
 const getData = async () => {
-  const dataURL = "https://apiv2.corona-live.com/stats.json"
+  const dataURL = "https://apiv2.corona-live.com/domestic-init.json"
   const data = await new Request(dataURL).loadJSON()
-  overview = data["overview"]
-
-  currentCnt = overview["current"][0]
-  currentGap = overview["current"][1]
-  totalGap = 1930
+  
+  currentCnt = data.statsLive.today
+  let prevCnt = data.statsLive.yesterday
+  currentGap = currentCnt - prevCnt
+  totalGap = data.stats.cases[1]
   
   return [currentCnt, currentGap, totalGap]
 }
