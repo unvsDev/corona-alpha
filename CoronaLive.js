@@ -7,7 +7,7 @@
 let devmode = false // 데이터 json 보기
 let useEditor = true // 내부 편집기 사용
 
-const build = 100
+const build = 200
 
 const source = "https://apiv2.corona-live.com/domestic-init.json"
 const url = "https://corona-live.com/"
