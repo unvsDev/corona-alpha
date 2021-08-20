@@ -1,8 +1,11 @@
+// Variables used by Scriptable.
+// These must be at the very top of the file. Do not edit.
+// icon-color: red; icon-glyph: street-view;
 // Corona Live - developed by unvsDev
 // https://github.com/unvsDev/corona-alpha
 
 let devmode = false // 데이터 json 보기
-let resetmode = false // 지역 초기화
+let useEditor = true // 내부 편집기 사용
 
 const build = 100
 
@@ -13,6 +16,17 @@ const regionsArr = ['서울', '부산', '인천', '대구', '광주', '대전', 
 
 let fm = FileManager.local()
 let fDir = `${fm.documentsDirectory()}/coronalive.json`
+let dDir = `${fm.documentsDirectory()}/corona-prefs.json`
+
+let init_wdata = {
+  "layout": "V2",
+  "bgbookmark": ""
+}
+
+if(!fm.fileExists(dDir)){
+  fm.writeString(dDir, JSON.stringify(init_wdata))
+}
+
 
 const getData = async () => {
   let request = new Request(source)
@@ -20,7 +34,11 @@ const getData = async () => {
   console.log("* [Stats] 데이터를 받아왔습니다.")
   
   return {
-   "casesLive": data.statsLive.today,
+   "liveToday": data.statsLive.today,
+   "liveYesterday": data.statsLive.yesterday,
+   "liveWeekAgo": data.statsLive.weekAgo,
+   "liveTwoWeeks": data.statsLive.twoWeeksAgo,
+   "liveMonthAgo": data.statsLive.monthAgo,
    "casesAll": data.stats.cases[0],
    "casesGap": data.stats.cases[1],
    "deathsAll": data.stats.deaths[0],
@@ -31,7 +49,11 @@ const getData = async () => {
   }
   
   /*
-    casesLive : 실시간 확진자 수
+    liveToday : 실시간 확진자 수
+    liveYesterday : 동시간대 비교 (어제)
+    liveWeekAgo : 동시간대 비교 (1주)
+    liveTwoWeeks : 동시간대 비교 (2주)
+    liveMonthAgo : 동시간대 비교 (1달)
     casesAll : 누적 확진자 수
     casesGap : 전일 확진자 총합
     deathsAll : 누적 사망자 수
@@ -138,7 +160,8 @@ const selectGu = async (regioncode) => {
   }
   
   let alert = new Alert()
-  alert.title = `지역으로\n${regionsArr[regioncode]}을(를) 설정하셨습니다.`
+  alert.title = "코로나 라이브"
+  alert.message = `관심 지역으로 ${regionsArr[regioncode]}이(가) 설정되었습니다.\n탐색 범위를 선택해 주세요.`
   alert.addAction("지역 전체")
   alert.addAction("우리 동네로 설정")
   
@@ -184,7 +207,8 @@ const getDeviceData = async (resetmode) => {
   let regioncode, gucode, guname
   if((config.runsInApp && resetmode) || !fm.fileExists(fDir)){
     let alert = new Alert()
-    alert.title = "지역을 설정합니다."
+    alert.title = "코로나 라이브"
+    alert.message = "확진자 현황을 확인할 지역을 설정합니다."
     alert.addAction("확인")
     await alert.present()
     
@@ -225,13 +249,6 @@ const fetchUpdate = async (buildnum) => {
   await fm2.writeString(wDir, request)
 }
 
-const getLevelColor = (count) => {
-    if (count >= 2000) return '#222831'
-    else if (count >= 1200) return '#dc143c'
-    else if (count >= 500) return '#f05454'
-    else return '#0099ff'
-}
-
 const checkUpdate = async () => {
   let buildurl = "https://github.com/unvsDev/corona-alpha/raw/main/VERSION2"
   let latestbuild = await new Request(buildurl).loadString()
@@ -245,20 +262,143 @@ const checkUpdate = async () => {
   }
 }
 
+const dataUpdate = async () => {
+  let wdata = JSON.parse(fm.readString(dDir))
+  let i = 0
+  
+  for(option in init_wdata){
+    if(wdata[option] == undefined){
+      wdata[option] = init_wdata[option]
+      i = i + 1
+      console.log(`* 데이터 업데이트 (${i})`)
+    }
+  }
+  
+  if(i > 0){
+    await fm.writeString(dDir, JSON.stringify(wdata))
+  }
+}
+
+const showEditor = async () => {
+  let wdata = JSON.parse(fm.readString(dDir))
+  
+  let editor = new UITable()
+  editor.showSeparators = true
+  
+  async function loadAllRows(){
+    let prefs = await getDeviceData()
+    let regioncode = prefs[0]
+    let gucode = prefs[1]
+    let guname = prefs[2]
+    
+    let header = new UITableRow()
+    header.height = 120
+    let title = UITableCell.text("Corona Live", "코로나19 정보를 위젯에 알기 쉽게 표시해 보세요.")
+    title.titleFont = Font.boldSystemFont(25)
+    
+    header.addCell(title)
+    editor.addRow(header)
+    
+    let BTSetRegion = new UITableRow()
+    BTSetRegion.height = 60
+    BTSetRegion.addText("지역 설정", `${regionsArr[regioncode]} ${guname}`)
+    BTSetRegion.dismissOnSelect = false
+    editor.addRow(BTSetRegion)
+    
+    BTSetRegion.onSelect = async () => {
+      await getDeviceData(true)
+      await refreshAllRows()
+    }
+    
+    let BTLayout = new UITableRow()
+    BTLayout.height = 60
+    BTLayout.addText("위젯 레이아웃", wdata.layout)
+    BTLayout.dismissOnSelect = false
+    editor.addRow(BTLayout)
+    
+    BTLayout.onSelect = async () => {
+      let alert = new Alert()
+      alert.title = "위젯 레이아웃을 선택해 주세요"
+      alert.addAction("V1")
+      alert.addAction("V2")
+      alert.addCancelAction("취소")
+      let response = await alert.presentSheet()
+      
+      if(response == 0){
+        wdata.layout = "V1"
+      } else if(response == 1){
+        wdata.layout = "V2"
+      }
+      
+      await refreshAllRows()
+    }
+    
+    let BTBookmark = new UITableRow()
+    BTBookmark.height = 60
+    BTBookmark.addText("배경 이미지", wdata.bgbookmark != "" ? wdata.bgbookmark : "기본 배경")
+    BTBookmark.dismissOnSelect = false
+    editor.addRow(BTBookmark)
+    
+    BTBookmark.onSelect = async () => {
+      let alert = new Alert()
+      alert.title = "배경 설정"
+      alert.message = "배경 이미지로 설정할 파일 북마크의 이름을 입력해 주세요."
+      alert.addTextField("", wdata.bgbookmark)
+      alert.addAction("확인")
+      alert.addCancelAction("취소")
+      let response = await alert.presentAlert()
+      
+      if(response == 0){
+        wdata.bgbookmark = alert.textFieldValue()
+      }
+      
+      await refreshAllRows()
+    }
+  }
+  
+  await loadAllRows()
+  await editor.present()
+    
+  async function refreshAllRows() {
+    editor.removeAllRows()
+    await loadAllRows()
+    editor.reload()
+  }
+  
+  await fm.writeString(dDir, JSON.stringify(wdata))
+}
+
 const addComma = (number) => {
   return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
-const setWidget = async () => {
-  // 정보 준비
-  let prefs = await getDeviceData(resetmode)
+const getLevelColor = (count) => {
+    if (count >= 2000) return '#222831'
+    else if (count >= 1200) return '#dc143c'
+    else if (count >= 500) return '#f05454'
+    else return '#0099ff'
+}
+
+const setTextColor = (target) => {
+  target.textColor = new Color("ffffff")
+}
+
+const addIntSymbol = (string) => {
+  return string.indexOf('-') != -1 ? string : `+${string}`
+}
+
+const setZeroToStr = (string) => {
+  return string.indexOf("0명") != -1 ? "집계 중" : string
+}
+
+const setWidgetV1 = async () => {
+  let prefs = await getDeviceData()
   let regioncode = prefs[0]
   let gucode = prefs[1]
   let guname = prefs[2]
   
   console.log(`* 설정한 지역은 [${regionsArr[regioncode]} ${guname}] 입니다.`)
   
-  // 정보 가져오기
   let stats = await getData()
   let locals = await getCityData(regioncode, gucode)
   let vacs = await getVaccineData()
@@ -275,8 +415,9 @@ const setWidget = async () => {
   let topStack = widget.addStack()
   
   topStack.addSpacer()
-  let liveText = topStack.addText(addComma(stats.casesLive))
+  let liveText = topStack.addText(addComma(stats.liveToday))
   liveText.font = Font.ultraLightSystemFont(37)
+  setTextColor(liveText)
   
   let inStack = topStack.addStack()
   inStack.layoutVertically()
@@ -285,6 +426,7 @@ const setWidget = async () => {
   let liveSub = inStack.addText("명")
   liveSub.font = Font.systemFont(16)
   topStack.addSpacer()
+  setTextColor(liveSub)
   
   widget.addSpacer(7)
   let prevStack = widget.addStack()
@@ -292,9 +434,11 @@ const setWidget = async () => {
   
   let prevTitle = prevStack.addText("어제 총합 ")
   prevTitle.font = Font.systemFont(13)
+  setTextColor(prevTitle)
   
-  let prevText = prevStack.addText(`${addComma(stats.casesGap)}명`)
+  let prevText = prevStack.addText(setZeroToStr(`${addComma(stats.casesGap)}명`))
   prevText.font = Font.boldSystemFont(13)
+  setTextColor(prevText)
   
   vacs.vacTotal = vacs.vacTotal / 1000000
   
@@ -304,9 +448,11 @@ const setWidget = async () => {
   
   let totTitle = totStack.addText("총 확진자 ")
   totTitle.font = Font.systemFont(13)
+  setTextColor(totTitle)
   
   let totText = totStack.addText(`${addComma(stats.casesAll)}명`)
   totText.font = Font.boldSystemFont(13)
+  setTextColor(totText)
   
   widget.addSpacer(6)
   let vacStack = widget.addStack()
@@ -314,9 +460,11 @@ const setWidget = async () => {
   
   let vacTitle = vacStack.addText("접종 완료 ")
   vacTitle.font = Font.systemFont(10)
+  setTextColor(vacTitle)
   
-  let vacText = vacStack.addText(`${vacs.vacTotal.toFixed(2)}백만 (${vacs.vacPercent}%)`)
+  let vacText = vacStack.addText(`${vacs.vacTotal.toFixed(1)}백만 (${vacs.vacPercent}%)`)
   vacText.font = Font.boldSystemFont(10)
+  setTextColor(vacText)
   
   widget.addSpacer(3)
   let cityStack = widget.addStack()
@@ -324,12 +472,14 @@ const setWidget = async () => {
   
   let cityTitle = cityStack.addText(`${regionsArr[regioncode]} ${guname} `)
   cityTitle.font = Font.systemFont(10)
+  setTextColor(cityTitle)
   
-  let cityText = cityStack.addText(`${addComma(locals.cityLive)}명 (어제 ${addComma(locals.cityGap)}명)`)
+  let cityText = cityStack.addText(`${addComma(locals.cityLive)}명 (` + setZeroToStr(`어제 ${addComma(locals.cityGap)}명`) + `)`)
   cityText.font = Font.boldSystemFont(10)
+  setTextColor(cityText)
   
   widget.url = url
-  widget.backgroundColor = new Color(getLevelColor(stats.casesLive))
+  widget.backgroundColor = new Color(getLevelColor(stats.liveToday))
 
   widget.refreshAfterDate = new Date(Date.now() + 1000 * 120) // 120초마다 리프레시 요청
 
@@ -337,8 +487,137 @@ const setWidget = async () => {
   return widget
 }
 
+const setWidgetV2 = async () => {
+  let prefs = await getDeviceData()
+  let regioncode = prefs[0]
+  let gucode = prefs[1]
+  let guname = prefs[2]
+  
+  console.log(`* 설정한 지역은 [${regionsArr[regioncode]} ${guname}] 입니다.`)
+  
+  let stats = await getData()
+  let locals = await getCityData(regioncode, gucode)
+  let vacs = await getVaccineData()
+  
+  if(devmode){
+    console.log(stats)
+    console.log(locals)
+    console.log(vacs)
+  }
+
+  // 위젯 레이아웃
+  let widget = new ListWidget()
+  
+  let header = widget.addText("코로나19")
+  setTextColor(header)
+  header.font = Font.boldSystemFont(21)
+  header.textOpacity = 0.7
+  
+  let todayStack = widget.addStack()
+  todayStack.centerAlignContent()
+  
+  let liveText = todayStack.addText(`${addComma(stats.liveToday)}명`)
+  setTextColor(liveText)
+  liveText.font = Font.boldSystemFont(22)
+  
+  todayStack.addSpacer(6)
+  let box = todayStack.addStack()
+  box.backgroundColor = new Color("ffffff")
+  box.setPadding(2,2,2,2)
+  box.cornerRadius = 5
+  
+  let liveDayGap = stats.liveToday - stats.liveYesterday
+  
+  let liveGap = box.addText(`${addIntSymbol(addComma(liveDayGap))}`)
+  liveGap.textColor = new Color("000000")
+  liveGap.font = Font.boldSystemFont(13)
+  
+  todayStack.addSpacer()
+  
+  widget.addSpacer()
+  
+  let prevStack = widget.addStack()
+  prevStack.layoutHorizontally()
+  
+  let prevTitle = prevStack.addText("어제 총합 ")
+  prevTitle.font = Font.systemFont(13)
+  
+  let prevText = prevStack.addText(setZeroToStr(`${addComma(stats.casesGap)}명`))
+  prevText.font = Font.boldSystemFont(13)
+  
+  setTextColor(prevTitle)
+  setTextColor(prevText)
+  prevStack.addSpacer()
+  
+  widget.addSpacer(4)
+  
+  let totStack = widget.addStack()
+  totStack.layoutHorizontally()
+  
+  let totTitle = totStack.addText("총 확진자 ")
+  totTitle.font = Font.systemFont(13)
+  
+  let totText = totStack.addText(setZeroToStr(`${addComma(stats.casesAll)}명`))
+  totText.font = Font.boldSystemFont(13)
+  
+  setTextColor(totTitle)
+  setTextColor(totText)
+  totStack.addSpacer()
+  
+  widget.addSpacer(4)
+  
+  vacs.vacTotal = vacs.vacTotal / 1000000
+  
+  let vacStack = widget.addStack()
+  vacStack.layoutHorizontally()
+  
+  let vacTitle = vacStack.addText("접종 완료 ")
+  vacTitle.font = Font.systemFont(10)
+  setTextColor(vacTitle)
+  
+  let vacText = vacStack.addText(`${vacs.vacTotal.toFixed(1)}백만 (${vacs.vacPercent}%)`)
+  vacText.font = Font.boldSystemFont(10)
+  setTextColor(vacText)
+  
+  vacStack.addSpacer()
+  
+  widget.addSpacer(3)
+  
+  let cityStack = widget.addStack()
+  cityStack.layoutHorizontally()
+  
+  let cityTitle = cityStack.addText(`${regionsArr[regioncode]} ${guname} `)
+  cityTitle.font = Font.systemFont(10)
+  setTextColor(cityTitle)
+  
+  let cityText = cityStack.addText(`${addComma(locals.cityLive)}명 (` + setZeroToStr(`어제 ${addComma(locals.cityGap)}명`) + `)`)
+  cityText.font = Font.boldSystemFont(10)
+  setTextColor(cityText)
+  
+  cityStack.addSpacer()
+  
+  widget.addSpacer(12)
+  
+  widget.url = url
+  widget.backgroundColor = new Color("00334e")
+  
+  if(wdata.bgbookmark != ""){
+    widget.backgroundImage = await fm.readImage(fm.bookmarkedPath(wdata.bgbookmark))
+  }
+
+  widget.refreshAfterDate = new Date(Date.now() + 1000 * 120) // 120초마다 리프레시 요청
+
+  widget.setPadding(12,10,7,10)
+  return widget
+}
+
 await checkUpdate()
-let widget = await setWidget()
+await dataUpdate()
+if(config.runsInApp && useEditor) await showEditor()
+
+let wdata = JSON.parse(fm.readString(dDir))
+let layout = wdata.layout
+let widget = await eval(`setWidget${layout}()`)
 if(config.runsInWidget){
   Script.setWidget(widget)
 } else {
