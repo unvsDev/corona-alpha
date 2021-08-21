@@ -7,7 +7,7 @@
 let devmode = false // 데이터 json 보기
 let useEditor = true // 내부 편집기 사용
 
-const build = 200
+const build = 201
 
 const source = "https://apiv2.corona-live.com/domestic-init.json"
 const url = "https://corona-live.com/"
@@ -388,7 +388,7 @@ const addIntSymbol = (string) => {
 }
 
 const setZeroToStr = (string) => {
-  return string.indexOf("0명") != -1 ? "집계 중" : string
+  return ((string.indexOf("0명") != -1) && (new Date().getHours() < 9)) ? "집계 중" : string
 }
 
 const setWidgetV1 = async () => {
