@@ -7,7 +7,7 @@
 let devmode = false // 데이터 json 보기
 let useEditor = true // 내부 편집기 사용
 
-const build = 201
+const build = 210
 
 const source = "https://apiv2.corona-live.com/domestic-init.json"
 const url = "https://corona-live.com/"
@@ -43,9 +43,9 @@ const getData = async () => {
    "casesGap": data.stats.cases[1],
    "deathsAll": data.stats.deaths[0],
    "deathsGap": data.stats.deaths[1],
-   "recoverAll": data.stats.recovered[0],
-   "recoverGap": data.stats.recovered[1],
-   "testsGap": data.stats.testing[1] + data.stats.negatives[1]
+   // "recoverAll": data.stats.recovered[0],
+   // "recoverGap": data.stats.recovered[1],
+   // "testsGap": data.stats.testing[1] + data.stats.negatives[1]
   }
   
   /*
