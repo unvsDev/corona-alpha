@@ -17,8 +17,8 @@
 const dataURL = "https://apiv2.corona-live.com/domestic-init.json"
 const data = await new Request(dataURL).loadJSON()
 const sourceURL = "https://corona-live.com"
-const version = 200
-const version2 = "2.0"
+const version = 201
+const version2 = "2.0.1"
 
 const today = new Date()
 
@@ -547,9 +547,9 @@ const getData = async () => {
    "casesGap": data.stats.cases[1],
    "deathsAll": data.stats.deaths[0],
    "deathsGap": data.stats.deaths[1],
-   "recoverAll": data.stats.recovered[0],
-   "recoverGap": data.stats.recovered[1],
-   "testsGap": data.stats.testing[1] + data.stats.negatives[1]
+   //"recoverAll": data.stats.recovered[0],
+   //"recoverGap": data.stats.recovered[1],
+   //"testsGap": data.stats.testing[1] + data.stats.negatives[1]
   }
   
   /*
