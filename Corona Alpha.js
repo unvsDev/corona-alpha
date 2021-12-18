@@ -4,7 +4,7 @@
 // Corona Alpha - developed by unvsDev
 // BETA Version
 
-const version = "3.1"
+const version = "3.1.1"
 
 const qrCheckInScheme = {
   "naver": ["네이버", "naversearchapp://opennadot?cardId=QRCheckIn"],
@@ -90,8 +90,10 @@ const checkUpdate = async () => {
     let versions = await new Request("https://gist.githubusercontent.com/unvsDev/e4d9aa9cfd95dd5e4bdad4a1791cba5d/raw/ca-versions.json").loadJSON()
     let latestVersion = versions.version[0]
     if(latestVersion.build != version){
+      let fm = FileManager.iCloud()
       let raw = await new Request("https://raw.githubusercontent.com/unvsDev/corona-alpha/main/Corona%20Alpha.js").loadString()
-      await writeString(`${fm.documentsDirectory()}/${Script.name()}.js`, raw)
+      await fm.writeString(`${fm.documentsDirectory()}/${Script.name()}.js`, raw)
+      if(config.runsInApp){ Safari.open(URLScheme.forRunningScript()) }
     } else {
       console.log("최신 버전을 사용하고 있습니다.")
     }
