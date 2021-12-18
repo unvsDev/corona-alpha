@@ -4,7 +4,13 @@
 // Corona Alpha - developed by unvsDev
 // BETA Version
 
-const version = "1.0"
+const version = "3.1"
+
+const qrCheckInScheme = {
+  "naver": ["네이버", "naversearchapp://opennadot?cardId=QRCheckIn"],
+  "toss": ["토스", "supertoss://qr-checkin?referrer=widget"],
+  "kakaotalk": ["카카오톡", "kakaotalk://qrcheckin?callingPkg=TalkWidgetExtension"]
+}
 
 
 const uifonts = {
@@ -91,6 +97,186 @@ const checkUpdate = async () => {
     }
   } catch(e){ }
 }
+
+const checkConfigData = async (alwaysReplaceLegacyData) => {
+  let mData = {
+    "qrSchemeKeyword": "kakaotalk"
+  }
+  if(alwaysReplaceLegacyData){ return mData }
+  if(fm.fileExists(mPath)){
+    let prevData = await readJSON(mPath)
+    for(index in prevData){
+      mData[index] = prevData[index]
+    }
+  }
+  
+  return mData
+}
+
+let mData = await checkConfigData(true)
+
+async function elementsAlert(title, subtitle, input){
+  let alert = new Alert()
+  alert.title = title
+  alert.message = subtitle
+  alert.addCancelAction(input[input.length - 1])
+  
+  for(let i = 0; i < input.length - 1; i++){
+    alert.addAction(input[i])
+  }
+  
+  return await alert.presentAlert()
+}
+
+function elementsText(rowHeight, dismissOnSelect, title, subtitle, titleSize, subtitleSize, table){
+  let element = new UITableRow()
+  element.height = rowHeight
+  element.dismissOnSelect = dismissOnSelect
+  
+  let text = UITableCell.text(title, subtitle)
+  // text.titleFont = Font.boldSystemFont(titleSize)
+  text.subtitleFont = Font.regularSystemFont(subtitleSize)
+
+  text.titleFont = new Font(uifonts.bold, titleSize)
+  // text.subtitleFont = new Font(uifonts.medium, subtitleSize)
+  
+  element.addCell(text)
+  table.addRow(element)
+  return [element, text]
+}
+
+function elementsSwitch(rowHeight, title, subtitle, description, titleSize, subtitleSize, options, input, table){
+  let val = mData[input.keyword]
+  
+  let element = new UITableRow()
+  element.height = rowHeight
+  element.dismissOnSelect = false
+  
+  let text = UITableCell.text(title, subtitle)
+  text.widthWeight = 50
+  text.leftAligned()
+  text.titleFont = Font.boldSystemFont(titleSize)
+  text.subtitleFont = Font.regularSystemFont(subtitleSize)
+
+  element.addCell(text)
+  
+  let btLeft = UITableCell.button("⬅️")
+  btLeft.widthWeight = 10
+  btLeft.leftAligned()
+  
+  btLeft.onTap = () => {
+    if(val - input.unit >= input.leftlimit){
+      mData[input.keyword] -= input.unit
+      refreshElements(table)
+    }
+  }
+  
+  element.addCell(btLeft)
+  
+  let indicator = UITableCell.text(options[val])
+  indicator.titleFont = Font.boldSystemFont(titleSize)
+  indicator.widthWeight = 20
+  indicator.centerAligned()
+  
+  element.addCell(indicator)
+  
+  let btRight = UITableCell.button("➡️")
+  btRight.widthWeight = 10
+  btRight.rightAligned()
+  
+  btRight.onTap = () => {
+    if(val + input.unit <= input.rightlimit){
+      mData[input.keyword] += input.unit
+      refreshElements(table)
+    }
+  }
+  
+  element.addCell(btRight)
+  
+  options.push("취소")
+  element.onSelect = async () => {
+    let choicer = await elementsAlert(title, description, options)
+    if(choicer != -1){
+      mData[input.keyword] = choicer
+      refreshElements(table)
+    }
+  }
+  
+  table.addRow(element)
+  return [element, text, indicator]
+}
+
+function loadElements(table){
+  let title = elementsText(100, false, "코로나 알파", "코로나19 상황을 위젯으로 빠르게 알아보세요.", 20, 13, table)
+  
+  title.onSelect = async () => {
+    let alert = new Alert()
+    alert.title = "Wow"
+    
+    await alert.presentAlert()
+  }
+  
+  let fontProfileMaster = elementsText(65, false, "폰트 설치하기", "위젯에 어울리는 폰트 프로파일을 설치하세요.", 14, 13, table)
+
+  let fontProfileGuider = fontProfileMaster[0]
+  
+  fontProfileGuider.onSelect = () => {
+    Safari.openInApp("https://www.scriptable-kr.app/ifp")
+  }
+  
+  let qrCheckInMaster = elementsText(65, false, "QR 체크인 경로", `${qrCheckInScheme[mData.qrSchemeKeyword][0]}에서 QR 체크인 하도록 설정했어요.`, 14, 13, table)
+
+  let qrCheckInSelection = qrCheckInMaster[0]
+
+  qrCheckInSelection.onSelect = async () => {
+    let options = []
+    for(index in qrCheckInScheme){
+      options.push(qrCheckInScheme[index][0])
+    }
+    options.push("취소")
+    let alert = await elementsAlert("어느 앱에서 QR 체크인 하시나요?", "자주 사용하는 앱을 선택하면 중간 사이즈의 위젯에서 빠르게 접근할 수 있어요.", options)
+    
+    if(alert != -1){
+      mData.qrSchemeKeyword = Object.keys(qrCheckInScheme)[alert]
+      refreshElements(table)
+    }
+  }
+  
+  let qrCheckInSelectionText = qrCheckInMaster[1]
+  qrCheckInSelectionText.widthWeight = 80
+  
+  let qrCheckInTester = UITableCell.button("테스트")
+  qrCheckInTester.widthWeight = 20
+  qrCheckInTester.rightAligned()
+  qrCheckInSelection.addCell(qrCheckInTester)
+  
+  qrCheckInTester.onTap = () => {
+    Safari.open(qrCheckInScheme[mData.qrSchemeKeyword][1])
+  }
+  
+  let widgetVersionMaster = elementsText(65, false, "위젯 버전", version, 14, 13, table)
+
+  let widgetVersion = widgetVersionMaster[0]
+}
+
+function refreshElements(table){
+  table.removeAllRows()
+  loadElements(table)
+  table.reload()
+}
+
+async function showLauncher(){
+  let table = new UITable()
+  table.showSeparators = true
+  loadElements(table)
+  await table.present(false)
+}
+
+if(config.runsInApp){
+  await showLauncher()
+  await writeJSON(mPath, mData)
+}
+
 
 
 
@@ -333,6 +519,8 @@ const mediumLayout = () => {
   font = new Font(uifonts.bold, 12),
   textColor = new Color(uicolors.gray),
   target = stqr)
+  
+  stqr.url = qrCheckInScheme[mData.qrSchemeKeyword][1]
   
   widget.refreshAfterDate = new Date(Date.now() + 1000 * 120)
   widget.backgroundColor = new Color(uicolors.bg01)
