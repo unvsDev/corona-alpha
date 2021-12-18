@@ -91,7 +91,7 @@ const checkUpdate = async () => {
     let latestVersion = versions.version[0]
     if(latestVersion.build != version){
       let fm = FileManager.iCloud()
-      let raw = await new Request("https://raw.githubusercontent.com/unvsDev/corona-alpha/main/Corona%20Alpha.js").loadString()
+      let raw = await new Request(latestVersion.raw).loadString()
       await fm.writeString(`${fm.documentsDirectory()}/${Script.name()}.js`, raw)
       if(config.runsInApp){ Safari.open(URLScheme.forRunningScript()) }
     } else {
