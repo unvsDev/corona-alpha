@@ -4,7 +4,7 @@
 // Corona Alpha - developed by unvsDev
 // BETA Version
 
-const version = "3.1.1"
+const version = "3.2"
 
 const qrCheckInScheme = {
   "naver": ["네이버", "naversearchapp://opennadot?cardId=QRCheckIn"],
@@ -115,7 +115,7 @@ const checkConfigData = async (alwaysReplaceLegacyData) => {
   return mData
 }
 
-let mData = await checkConfigData(true)
+let mData = await checkConfigData()
 
 async function elementsAlert(title, subtitle, input){
   let alert = new Alert()
@@ -550,4 +550,7 @@ if(config.runsInWidget){
   let widget = supports.includes(size) ? eval(`${size}Layout()`) : errorLayout("해당 위젯 사이즈는 지원하지 않습니다.")
   
   Script.setWidget(widget)
+} else if(config.runsInApp){
+  let widget = mediumLayout()
+  widget.presentMedium()
 }
