@@ -2,14 +2,16 @@
 // These must be at the very top of the file. Do not edit.
 // icon-color: deep-blue; icon-glyph: street-view;
 // Corona Alpha - developed by unvsDev
-// BETA Version
+// 위젯 파일 및 제공되는 코드의 무단 재배포, 공유 및 판매는 엄격히 금지됩니다.
 
-const version = "3.2"
+
+const version = "3.3"
 
 const qrCheckInScheme = {
   "naver": ["네이버", "naversearchapp://opennadot?cardId=QRCheckIn"],
   "toss": ["토스", "supertoss://qr-checkin?referrer=widget"],
-  "kakaotalk": ["카카오톡", "kakaotalk://qrcheckin?callingPkg=TalkWidgetExtension"]
+  "kakaotalk": ["카카오톡", "kakaotalk://qrcheckin?callingPkg=TalkWidgetExtension"],
+  "naver-ext": ["네이버 (Web)", "https://nid.naver.com/login/privacyQR"]
 }
 
 
@@ -136,10 +138,10 @@ function elementsText(rowHeight, dismissOnSelect, title, subtitle, titleSize, su
   element.dismissOnSelect = dismissOnSelect
   
   let text = UITableCell.text(title, subtitle)
-  // text.titleFont = Font.boldSystemFont(titleSize)
+  text.titleFont = Font.boldSystemFont(titleSize)
   text.subtitleFont = Font.regularSystemFont(subtitleSize)
 
-  text.titleFont = new Font(uifonts.bold, titleSize)
+  // text.titleFont = new Font(uifonts.bold, titleSize)
   // text.subtitleFont = new Font(uifonts.medium, subtitleSize)
   
   element.addCell(text)
@@ -211,13 +213,6 @@ function elementsSwitch(rowHeight, title, subtitle, description, titleSize, subt
 function loadElements(table){
   let title = elementsText(100, false, "코로나 알파", "코로나19 상황을 위젯으로 빠르게 알아보세요.", 20, 13, table)
   
-  title.onSelect = async () => {
-    let alert = new Alert()
-    alert.title = "Wow"
-    
-    await alert.presentAlert()
-  }
-  
   let fontProfileMaster = elementsText(65, false, "폰트 설치하기", "위젯에 어울리는 폰트 프로파일을 설치하세요.", 14, 13, table)
 
   let fontProfileGuider = fontProfileMaster[0]
@@ -236,7 +231,7 @@ function loadElements(table){
       options.push(qrCheckInScheme[index][0])
     }
     options.push("취소")
-    let alert = await elementsAlert("어느 앱에서 QR 체크인 하시나요?", "자주 사용하는 앱을 선택하면 중간 사이즈의 위젯에서 빠르게 접근할 수 있어요.", options)
+    let alert = await elementsAlert("어느 앱에서 QR 체크인 하시나요?", "자주 사용하는 앱을 선택하면 위젯에서 아래 방법을 통해 빠르게 접근할 수 있어요.\n\n- 소형 위젯: 위젯 클릭\n- 중형 위젯: 위젯에서 \"QR 체크인\" 클릭", options)
     
     if(alert != -1){
       mData.qrSchemeKeyword = Object.keys(qrCheckInScheme)[alert]
@@ -254,6 +249,14 @@ function loadElements(table){
   
   qrCheckInTester.onTap = () => {
     Safari.open(qrCheckInScheme[mData.qrSchemeKeyword][1])
+  }
+  
+  let fontDebugMaster = elementsText(65, false, "공지사항", "코로나 알파에 관한 소식을 확인하실 수 있어요.", 14, 13, table)
+
+  let fontDebugElement = fontDebugMaster[0]
+  
+  fontDebugElement.onSelect = () => {
+    Safari.openInApp("https://www.scriptable-kr.app/ifp")
   }
   
   let widgetVersionMaster = elementsText(65, false, "위젯 버전", version, 14, 13, table)
@@ -419,6 +422,7 @@ const smallLayout = () => {
   
   widget.refreshAfterDate = new Date(Date.now() + 1000 * 120)
   widget.backgroundColor = new Color(uicolors.bg01)
+  widget.url = qrCheckInScheme[mData.qrSchemeKeyword][1]
   return widget
 }
 
