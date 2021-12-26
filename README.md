@@ -3,7 +3,7 @@
 <img width="300" src="https://user-images.githubusercontent.com/63099769/147398742-b8f68143-7340-4ba1-9085-d38fe2b52365.PNG">
 </div>
 
-[위젯 다운로드 (v3.3)](https://github.com/unvsDev/corona-alpha/releases/download/3.3/CoronaAlpha.scriptable) | [개발자 문의/피드백](https://discord.gg/BCP2S7BdaC)
+[위젯 다운로드 (v3.3)](https://github.com/unvsDev/corona-alpha/releases/download/3.3/CoronaAlpha.js) | [개발자 문의/피드백](https://discord.gg/BCP2S7BdaC)
 
 ## Widget
 - iOS 14 이상에서 사용할 수 있는 Scriptable 위젯입니다.
