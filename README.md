@@ -1,35 +1,22 @@
 # Corona Alpha
 <div>
-<img width="900" src="https://user-images.githubusercontent.com/63099769/106144197-36216600-61b7-11eb-88ac-392283520ad3.png">
+<img width="300" src="https://user-images.githubusercontent.com/63099769/147398742-b8f68143-7340-4ba1-9085-d38fe2b52365.PNG">
 </div>
-
-대한민국의 **코로나19 확진자 정보**를, **아이폰에서도 한 눈에** 만나 보세요.
-
-**대한민국 최대 iOS 코로나 위젯**을 지금 바로 즐겨 보세요!
 
 ## Widget
-- **당일 실시간 확진자 및 전체 확진자**와, **대한민국 내 각종 시/도 + 구에서의 확진자 수**를 표시합니다. (구 단위 확인 기능은 현재 서울, 부산 대상으로 지원, 추후 전국으로 확대 예정)
-- **어제 대비 증감** 또한 보여주며, 이 모든 정보를 최대한 **직관적이고 알아보기 쉬운 레이아웃**으로 나타냅니다.
-- 확진자가 일정 값 이상으로 증가할 때, 또는 정해진 매 시간마다 **확진자 알림을 푸시하도록 설정**할 수 있습니다. 
-- 위젯에 **자체 설정이 내장**되어 있어 다양한 커스터마이징이 가능합니다.
-- **한국어와 영어**를 완벽하게 지원합니다.
+- iOS 14 이상에서 사용할 수 있는 Scriptable 위젯입니다.
+- [코로나 라이브](https://corona-live.com/)에서 국내 코로나19 확진자 현황을 불러와 위젯에 표시합니다.
+- 실시간 확진자 수, 어제/1주전 대비 증감, 위중증자/오미크론 정보 등을 제공합니다.
+- 홈 화면에서 위젯을 탭해서 QR 체크인으로 빠르게 이동할 수 있습니다.
+- 위젯 편집기를 앱 내에서 제공합니다.
 <div>
-<img width="266" src="https://user-images.githubusercontent.com/63099769/105147558-b525f700-5b44-11eb-8b77-652e9f0b7a89.jpeg"><br>
-<img width="266" src="https://user-images.githubusercontent.com/63099769/106149878-16da0700-61be-11eb-993a-063649f73b27.png">
+<img width="266" src="https://user-images.githubusercontent.com/63099769/147398816-b0659db7-1b57-49ec-ab9f-e0deaf0f5967.jpg">
 </div>
-
-## How to Install
-[Scriptable App](https://apps.apple.com/kr/app/scriptable/id1405459188)을 설치하신 다음, [Release 탭](https://github.com/unvsDev/corona-alpha/releases)에 들어가서 Scriptable 파일을 다운로드하세요.
-이후 "Scriptable에서 열기"를 공유 시트에서 선택하시면, 바로 코로나 알파 위젯을 사용하실 수 있습니다!
 
 ## Announcement
 - 본 위젯은 **무단 재배포 및 재공유하실 수 없으며**, Github 링크를 공유하여 주시기 바랍니다.
 - 코로나19 확진자 정보를 수집하기 위해 **[코로나 라이브 API](https://corona-live.com/)를 이용**합니다. 이는 민간이 취합한 집계가 일부 포함되어 있으므로, **본 위젯의 정보를 공식적인 근거 자료로 활용하는 것은 부적절할 수 있습니다.** 또한 본 위젯의 정보를 이용하거나 공유해 문제가 발생할 시 해당 책임은 전적으로 사용자에게 있음을 알려드립니다.
 - 더 나은 사용자 경험을 제공하기 위해 최신 버전으로 위젯이 자동 업데이트될 수 있습니다.
-- iOS 위젯 정책에 따라, 리프레시가 일부 지연될 수 있습니다. 또한 실시간 알림이 예상 시간보다 일부 지연되어 푸시될 수 있습니다.
-- 위젯 자체 데이터를 저장하기 위해 iCloud Drive의 활성화가 필요할 수 있습니다. 해당 서비스의 이용에 어려움이 있으시다면, 초기 설정에서 데이터를 로컬에 저장하도록 선택할 수 있습니다.
+- iOS 위젯 정책에 따라 리프레시가 일부 지연될 수 있습니다.
 
-## Support / Donate
-코로나 알파 위젯에 대해 궁금증이 있으시거나, 피드백을 제출하고 싶으신가요? 🚀
-
-[Scriptable Lab 디스코드](https://discord.gg/BCP2S7BdaC)에 참여하세요! 더 많은 위젯을 만나보실 수 있습니다 😁
+[개발자 문의/피드백](https://discord.gg/BCP2S7BdaC)
