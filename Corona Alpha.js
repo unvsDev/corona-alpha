@@ -256,7 +256,7 @@ function loadElements(table){
   let fontDebugElement = fontDebugMaster[0]
   
   fontDebugElement.onSelect = () => {
-    Safari.openInApp("https://www.scriptable-kr.app/ifp")
+    Safari.openInApp("https://www.scriptable-kr.app/ca-annc")
   }
   
   let widgetVersionMaster = elementsText(65, false, "위젯 버전", version, 14, 13, table)
