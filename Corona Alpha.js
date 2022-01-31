@@ -5,7 +5,7 @@
 // 위젯 파일 및 제공되는 코드의 무단 재배포, 공유 및 판매는 엄격히 금지됩니다.
 
 
-const version = "3.3"
+const version = "3.4"
 
 const qrCheckInScheme = {
   "naver": ["네이버", "naversearchapp://opennadot?cardId=QRCheckIn"],
@@ -471,17 +471,17 @@ const mediumLayout = () => {
   
   addSegment("확진자", confirmed0, confirmed1, uicolors.red)
   blocks.addSpacer(7)
-  
-  let severe0 = statDom.overview.confirmedSevereSymptoms[0]
-  let severe1 = statDom.overview.confirmedSevereSymptoms[1]
 
-  addSegment("위중증자", severe0, severe1, uicolors.blue)
+  let deceased0 = statDom.overview.deceased[0]
+  let deceased1 = statDom.overview.deceased[1]
+
+  addSegment("사망자", deceased0, deceased1, uicolors.darkgray)
   blocks.addSpacer(7)
+  
+  let recovered0 = statDom.overview.recovered[0]
+  let recovered1 = statDom.overview.recovered[1]
 
-  let omicron0 = statDom.overview.confirmedOmicron[0]
-  let omicron1 = statDom.overview.confirmedOmicron[1]
-
-  addSegment("오미크론", omicron0, omicron1, uicolors.darkgray)
+  addSegment("완치자", recovered0, recovered1, uicolors.blue)
   
   widget.addSpacer(7)
   
