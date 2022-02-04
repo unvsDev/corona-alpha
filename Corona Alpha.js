@@ -5,13 +5,14 @@
 // 위젯 파일 및 제공되는 코드의 무단 재배포, 공유 및 판매는 엄격히 금지됩니다.
 
 
-const version = "3.4"
+const version = "3.5"
 
 const qrCheckInScheme = {
   "naver": ["네이버", "naversearchapp://opennadot?cardId=QRCheckIn"],
   "toss": ["토스", "supertoss://qr-checkin?referrer=widget"],
   "kakaotalk": ["카카오톡", "kakaotalk://qrcheckin?callingPkg=TalkWidgetExtension"],
-  "naver-ext": ["네이버 (Web)", "https://nid.naver.com/login/privacyQR"]
+  "naver-ext": ["네이버 (Web)", "https://nid.naver.com/login/privacyQR"],
+  "coov": ["COOV 앱", "coov://"]
 }
 
 
@@ -432,7 +433,7 @@ const mediumLayout = () => {
   let blocks = widget.addStack()
   blocks.layoutHorizontally()
   
-  const addSegment = (title, value, gapvalue, color) => {
+  const addSegment = (title, value, gapvalue, color, forLargeValue) => {
     let block = blocks.addStack()
     block.layoutVertically()
     
@@ -449,7 +450,7 @@ const mediumLayout = () => {
     target = block, true)
     
     let liveConfirmedTx = addText(
-    content = addComma(value),
+    content = forLargeValue ? (value/1000000).toFixed(2) + "백만" : addComma(value),
     font = new Font(uifonts.bold, 18),
     textColor = new Color(color),
     target = block, true)
@@ -469,7 +470,7 @@ const mediumLayout = () => {
   let confirmed0 = statDom.overview.confirmed[0]
   let confirmed1 = statDom.overview.confirmed[1]
   
-  addSegment("확진자", confirmed0, confirmed1, uicolors.red)
+  addSegment("확진자", confirmed0, confirmed1, uicolors.red, true)
   blocks.addSpacer(7)
 
   let deceased0 = statDom.overview.deceased[0]
@@ -530,6 +531,8 @@ const mediumLayout = () => {
   
   widget.refreshAfterDate = new Date(Date.now() + 1000 * 120)
   widget.backgroundColor = new Color(uicolors.bg01)
+  
+  widget.url = "https://corona-live.com"
   return widget
 }
 
