@@ -5,7 +5,7 @@
 // 위젯 파일 및 제공되는 코드의 무단 재배포, 공유 및 판매는 엄격히 금지됩니다.
 
 
-const version = "3.5"
+const version = "3.6"
 
 const qrCheckInScheme = {
   "naver": ["네이버", "naversearchapp://opennadot?cardId=QRCheckIn"],
@@ -373,7 +373,7 @@ const smallLayout = () => {
   
   let liveConfirmedTx = addText(
   content = addComma(liveConfirmed),
-  font = new Font(uifonts.medium, 27),
+  font = new Font(uifonts.medium, liveConfirmed >= 100000 ? 25 : 27),
   textColor = new Color(uicolors.tx01),
   target = st1)
   
@@ -424,6 +424,8 @@ const smallLayout = () => {
   widget.refreshAfterDate = new Date(Date.now() + 1000 * 120)
   widget.backgroundColor = new Color(uicolors.bg01)
   widget.url = qrCheckInScheme[mData.qrSchemeKeyword][1]
+
+  widget.setPadding(15,10,15,10)
   return widget
 }
 
