@@ -1,6 +1,6 @@
 # Corona Alpha
 <div>
-<img width="300" src="https://user-images.githubusercontent.com/63099769/154507646-8477cd24-d347-4e0f-93a4-8f29a486208c.png">
+<img width="300" src="https://user-images.githubusercontent.com/63099769/154508114-82ea1800-b29a-4843-b594-62854b69ead2.png">
 </div>
 
 [위젯 다운로드 (v3.3)](https://github.com/unvsDev/corona-alpha/releases/download/3.3/CoronaAlpha.js) | [개발자 문의/피드백](https://discord.gg/BCP2S7BdaC)
