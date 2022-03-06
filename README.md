@@ -1,9 +1,10 @@
 # Corona Alpha
 <div>
-<img width="300" src="https://user-images.githubusercontent.com/63099769/154508114-82ea1800-b29a-4843-b594-62854b69ead2.png">
+<img width="300" src="https://user-images.githubusercontent.com/63099769/156920456-9726b2b8-602d-4455-a288-77e8db159b8e.jpeg">
+<img width="300" src="https://user-images.githubusercontent.com/63099769/156920457-e52c58c7-0797-4256-93ee-a081509dd67b.jpeg">
 </div>
 
-[위젯 다운로드 (v3.6)](https://github.com/unvsDev/corona-alpha/releases/download/3.6/CoronaAlpha.js) | [개발자 문의/피드백](https://discord.gg/BCP2S7BdaC)
+[위젯 다운로드 (v4.0)](https://github.com/unvsDev/corona-alpha/releases/download/4.0/CoronaAlpha.scriptable) | [개발자 문의/피드백](https://discord.gg/BCP2S7BdaC)
 
 ## Widget
 - iOS 14 이상에서 사용할 수 있는 Scriptable 위젯입니다.
