@@ -1,13 +1,66 @@
 // Variables used by Scriptable.
 // These must be at the very top of the file. Do not edit.
-// icon-color: deep-blue; icon-glyph: street-view;
+// icon-color: deep-blue; icon-glyph: chart-bar;
 // Corona Alpha - developed by unvsDev
 // 위젯 파일 및 제공되는 코드의 무단 재배포, 공유 및 판매는 엄격히 금지됩니다.
 
 
-const version = "3.6"
+const version = "4.0"
 
-const qrCheckInScheme = {
+const subWidth = 140
+// Medium 위젯에서 우측 블럭의 너비
+const layoutPadding = [11, 11, 11, 11]
+// 레이아웃 여백 - Top, Bottom, Left(leading), Right(trailing)
+
+
+let fm = FileManager.local()
+let mainPath = fm.documentsDirectory()
+let prefPath = `${mainPath}/alpha-pref.json`
+
+let prefs = {
+  "lang": 0,
+  "region": 0,
+  "pass": "naver",
+}
+
+const source = "https://raw.githubusercontent.com/unvsDev/corona-alpha/main/Corona%20Alpha.js"
+
+const serv = "https://raw.githubusercontent.com/unvsDev/corona-alpha/main/service.json"
+
+async function isDeviceOnline(){
+  const wv = new WebView()
+  await wv.loadURL('about:blank')
+  let js = "navigator.onLine"
+  let r = await wv.evaluateJavaScript(js)
+  return r
+}
+
+async function checkUpdate(){
+  let service = await new Request(serv).loadJSON()
+  
+  if(service.version != version){
+    let code = await new Request(source).loadString()
+    let fm = FileManager.iCloud()
+    
+    await fm.writeString(`${fm.documentsDirectory()}/${Script.name()}.js`, code)
+    
+    if(config.runsInApp){ Safari.open(URLScheme.forRunningScript()) }
+    return 1
+  }
+  
+  return 0
+}
+
+let checkedFlag = false
+if(await isDeviceOnline()){
+  if(await checkUpdate()){ return 0 }
+  checkedFlag = true
+}
+
+const regionArr = ['서울', '부산', '인천', '대구', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '경북', '경남', '전북', '전남', '제주']
+const regionArrEn = ['Seoul', 'Busan', 'Incheon', 'Daegu', 'Gwangju', 'Daejeon', 'Ulsan', 'Sejong', 'Gyeonggi', 'Gangwon', 'Chungbuk', 'Chungnam', 'Gyeongbuk', 'Gyeongnam', 'Jeonbuk', 'Jeonnam', 'Jeju']
+
+const passArr = {
   "naver": ["네이버", "naversearchapp://opennadot?cardId=QRCheckIn"],
   "toss": ["토스", "supertoss://qr-checkin?referrer=widget"],
   "kakaotalk": ["카카오톡", "kakaotalk://qrcheckin?callingPkg=TalkWidgetExtension"],
@@ -16,311 +69,211 @@ const qrCheckInScheme = {
 }
 
 
-const uifonts = {
-  bold: "Spoqa Han Sans Neo Bold",
-  medium: "Spoqa Han Sans Neo Medium",
-  light: "Spoqa Han Sans Neo Light"
-}
-
-const uicolors = {
-  bg01: "0E172A",
-  bg02: "182133",
-  bg03: "152E64",
-  tx01: "ffffff",
-  red: "EB5374",
-  blue: "5673EB",
-  darkgray: "828284",
-  gray: "CFCFCF"
-}
-
-let fm = FileManager.local()
-
-async function readString(filePath){
-  if(fm.fileExists(filePath)){
-    if(fm.isFileStoredIniCloud(filePath) && !fm.isFileDownloaded(filePath)){
-      await fm.downloadFileFromiCloud(filePath)
+function refreshPref(){
+  if(fm.fileExists(prefPath)){
+    let prev = JSON.parse(fm.readString(prefPath))
+    for(index in prev){
+      prefs[index] = prev[index]
     }
-    return await fm.readString(filePath)
-  } else {
-    return null
   }
 }
 
-async function readJSON(filePath){
-  return JSON.parse(await readString(filePath))
+function savePref(){
+  fm.writeString(prefPath, JSON.stringify(prefs))
 }
 
-async function writeString(filePath, content){
-  await fm.writeString(filePath, content)
+async function showTable(){
+  refreshPref()
+  
+  let table = new UITable()
+  table.showSeparators = true
+  
+  function loadTable(){
+    let row1 = new UITableRow()
+    row1.height = 70
+    row1.dismissOnSelect = false
+    
+    let option1 = ["Korean", "English"]
+    let text1 = row1.addText(`🌏 Language: ${option1[prefs.lang]}`, "This property only affects widget.")
+    text1.titleFont = Font.boldSystemFont(15)
+    text1.subtitleFont = Font.systemFont(14)
+    
+    table.addRow(row1)
+    
+    row1.onSelect = async () => {
+      let alert = new Alert()
+      alert.addAction("Korean")
+      alert.addAction("English")
+      alert.addCancelAction("Cancel")
+      let r = await alert.presentSheet()
+      if(r != -1){ prefs.lang = r }
+      refreshTable()
+    }
+    
+    let row2 = new UITableRow()
+    row2.height = 70
+    row2.dismissOnSelect = false
+    
+    let text2 = row2.addText(`📲 폰트 프로파일 설치`, "위젯에는 스포카 한 산스가 적용되어 있습니다.")
+    text2.titleFont = Font.boldSystemFont(15)
+    text2.subtitleFont = Font.systemFont(14)
+    
+    table.addRow(row2)
+    
+    row2.onSelect = () => {
+      Safari.openInApp("https://www.scriptable-kr.app/ifp", false)
+    }
+    
+    let row3 = new UITableRow()
+    row3.height = 70
+    row3.dismissOnSelect = false
+    
+    let text3 = row3.addText(`📍 지역 데이터: ${`${regionArr[prefs.region]} ${regionArrEn[prefs.region]}`}`, "중형 위젯에서 지역 데이터를 확인할 수 있습니다.")
+    
+    text3.titleFont = Font.boldSystemFont(15)
+    text3.subtitleFont = Font.systemFont(14)
+    
+    table.addRow(row3)
+    
+    row3.onSelect = async () => {
+      let opt = new UITable()
+      opt.showSeparators = true
+      
+      for(index in regionArr){
+        let bt = new UITableRow()
+        bt.height = 55
+        
+        let text = bt.addText(`${regionArr[index]} ${regionArrEn[index]}`)
+        text.titleFont = Font.boldSystemFont(15)
+        
+        opt.addRow(bt)
+        
+        bt.onSelect = (number) => {
+          prefs.region = number
+        }
+      }
+      
+      await opt.present()
+      refreshTable()
+    }
+    
+    let row4 = new UITableRow()
+    row4.height = 70
+    row4.dismissOnSelect = false
+    
+    let text4 = row4.addText(`🔗 연결 앱: ${passArr[prefs.pass][0]}`, "위젯에서 빠르게 방역 패스에 접근할 수 있습니다.")
+    
+    text4.titleFont = Font.boldSystemFont(15)
+    text4.subtitleFont = Font.systemFont(14)
+    
+    table.addRow(row4)
+    
+    row4.onSelect = async () => {
+      let opt = new UITable()
+      opt.showSeparators = true
+      
+      for(index in passArr){
+        let bt = new UITableRow()
+        bt.height = 55
+        
+        let text = bt.addText(`${passArr[index][0]}`)
+        text.titleFont = Font.boldSystemFont(15)
+        
+        opt.addRow(bt)
+        
+        bt.onSelect = (number) => {
+          prefs.pass = Object.keys(passArr)[number]
+        }
+      }
+      
+      await opt.present()
+      refreshTable()
+    }
+    
+    let row5 = new UITableRow()
+    row5.height = 70
+    
+    let text5 = row5.addText(`위젯 버전: ${version}`, checkedFlag ? "최신 버전입니다." : null)
+    text5.titleFont = Font.boldSystemFont(15)
+    text5.subtitleFont = Font.systemFont(14)
+    
+    table.addRow(row5)
+  }
+  
+  function refreshTable(){
+    table.removeAllRows()
+    loadTable()
+    table.reload()
+  }
+  
+  loadTable()
+  await table.present()
+  
+  savePref()
 }
 
-async function writeJSON(filePath, content){
-  await writeString(filePath, JSON.stringify(content))
+
+if(config.runsInApp){
+  await showTable()
 }
 
+refreshPref()
+
+
+const useEnglishUI = prefs.lang
+
+const loadRegionData = true
+const dataRegion = prefs.region
+
+const dataPass = prefs.pass
+
+
+const fontBold = (fontSize) => {
+  return new Font("Spoqa Han Sans Neo Bold", fontSize)
+}
+
+const fontMedium = (fontSize) => {
+  return new Font("Spoqa Han Sans Neo Medium", fontSize)
+}
+
+const fontLight = (fontSize) => {
+  return new Font("Spoqa Han Sans Neo Light", fontSize)
+}
 
 let dataTime = new Date().getTime()
 let dataUrl = "https://apiv3.corona-live.com"
 
-let statDom; let liveDom;
-
-let dataPath = `${fm.documentsDirectory()}/corona-alpha`
-let mPath = `${fm.documentsDirectory()}/ca-config.json`
-
-if(!fm.fileExists(`${dataPath}-stat.json`)){
-  if(config.runsInApp){
-    await Safari.openInApp("https://www.scriptable-kr.app/ifp")
-  } else { throw new Error("앱 내에서 위젯을 실행해주세요.") }
-}
-
-try{
-  statDom = await new Request(`${dataUrl}/domestic/stat.json?timestamp=${dataTime}`).loadJSON()
+async function loadData(reqUrl, dataPath){
+  let target
+  let path = `${mainPath}/ca-${dataPath}.json`
   
-  liveDom = await new Request(`${dataUrl}/domestic/live.json?timestamp=${dataTime}`).loadJSON()
-
-  await writeJSON(`${dataPath}-stat.json`, statDom)
-  await writeJSON(`${dataPath}-live.json`, liveDom)
-  
-  console.log("코로나 라이브에서 정보를 가져오는 데 성공했습니다.")
-} catch(e){
-  statDom = await readJSON(`${dataPath}-stat.json`)
-  
-  liveDom = await readJSON(`${dataPath}-live.json`)
-}
-
-const checkUpdate = async () => {
   try{
-    let versions = await new Request("https://gist.githubusercontent.com/unvsDev/e4d9aa9cfd95dd5e4bdad4a1791cba5d/raw/ca-versions.json").loadJSON()
-    let latestVersion = versions.version[0]
-    if(latestVersion.build != version){
-      let fm = FileManager.iCloud()
-      let raw = await new Request(latestVersion.raw).loadString()
-      await fm.writeString(`${fm.documentsDirectory()}/${Script.name()}.js`, raw)
-      if(config.runsInApp){ Safari.open(URLScheme.forRunningScript()) }
-    } else {
-      console.log("최신 버전을 사용하고 있습니다.")
-    }
-  } catch(e){ }
-}
-
-const checkConfigData = async (alwaysReplaceLegacyData) => {
-  let mData = {
-    "qrSchemeKeyword": "kakaotalk"
-  }
-  if(alwaysReplaceLegacyData){ return mData }
-  if(fm.fileExists(mPath)){
-    let prevData = await readJSON(mPath)
-    for(index in prevData){
-      mData[index] = prevData[index]
-    }
-  }
-  
-  return mData
-}
-
-let mData = await checkConfigData()
-
-async function elementsAlert(title, subtitle, input){
-  let alert = new Alert()
-  alert.title = title
-  alert.message = subtitle
-  alert.addCancelAction(input[input.length - 1])
-  
-  for(let i = 0; i < input.length - 1; i++){
-    alert.addAction(input[i])
-  }
-  
-  return await alert.presentAlert()
-}
-
-function elementsText(rowHeight, dismissOnSelect, title, subtitle, titleSize, subtitleSize, table){
-  let element = new UITableRow()
-  element.height = rowHeight
-  element.dismissOnSelect = dismissOnSelect
-  
-  let text = UITableCell.text(title, subtitle)
-  text.titleFont = Font.boldSystemFont(titleSize)
-  text.subtitleFont = Font.regularSystemFont(subtitleSize)
-
-  // text.titleFont = new Font(uifonts.bold, titleSize)
-  // text.subtitleFont = new Font(uifonts.medium, subtitleSize)
-  
-  element.addCell(text)
-  table.addRow(element)
-  return [element, text]
-}
-
-function elementsSwitch(rowHeight, title, subtitle, description, titleSize, subtitleSize, options, input, table){
-  let val = mData[input.keyword]
-  
-  let element = new UITableRow()
-  element.height = rowHeight
-  element.dismissOnSelect = false
-  
-  let text = UITableCell.text(title, subtitle)
-  text.widthWeight = 50
-  text.leftAligned()
-  text.titleFont = Font.boldSystemFont(titleSize)
-  text.subtitleFont = Font.regularSystemFont(subtitleSize)
-
-  element.addCell(text)
-  
-  let btLeft = UITableCell.button("⬅️")
-  btLeft.widthWeight = 10
-  btLeft.leftAligned()
-  
-  btLeft.onTap = () => {
-    if(val - input.unit >= input.leftlimit){
-      mData[input.keyword] -= input.unit
-      refreshElements(table)
-    }
-  }
-  
-  element.addCell(btLeft)
-  
-  let indicator = UITableCell.text(options[val])
-  indicator.titleFont = Font.boldSystemFont(titleSize)
-  indicator.widthWeight = 20
-  indicator.centerAligned()
-  
-  element.addCell(indicator)
-  
-  let btRight = UITableCell.button("➡️")
-  btRight.widthWeight = 10
-  btRight.rightAligned()
-  
-  btRight.onTap = () => {
-    if(val + input.unit <= input.rightlimit){
-      mData[input.keyword] += input.unit
-      refreshElements(table)
-    }
-  }
-  
-  element.addCell(btRight)
-  
-  options.push("취소")
-  element.onSelect = async () => {
-    let choicer = await elementsAlert(title, description, options)
-    if(choicer != -1){
-      mData[input.keyword] = choicer
-      refreshElements(table)
-    }
-  }
-  
-  table.addRow(element)
-  return [element, text, indicator]
-}
-
-function loadElements(table){
-  let title = elementsText(100, false, "코로나 알파", "코로나19 상황을 위젯으로 빠르게 알아보세요.", 20, 13, table)
-  
-  let fontProfileMaster = elementsText(65, false, "폰트 설치하기", "위젯에 어울리는 폰트 프로파일을 설치하세요.", 14, 13, table)
-
-  let fontProfileGuider = fontProfileMaster[0]
-  
-  fontProfileGuider.onSelect = () => {
-    Safari.openInApp("https://www.scriptable-kr.app/ifp")
-  }
-  
-  let qrCheckInMaster = elementsText(65, false, "QR 체크인 경로", `${qrCheckInScheme[mData.qrSchemeKeyword][0]}에서 QR 체크인 하도록 설정했어요.`, 14, 13, table)
-
-  let qrCheckInSelection = qrCheckInMaster[0]
-
-  qrCheckInSelection.onSelect = async () => {
-    let options = []
-    for(index in qrCheckInScheme){
-      options.push(qrCheckInScheme[index][0])
-    }
-    options.push("취소")
-    let alert = await elementsAlert("어느 앱에서 QR 체크인 하시나요?", "자주 사용하는 앱을 선택하면 위젯에서 아래 방법을 통해 빠르게 접근할 수 있어요.\n\n- 소형 위젯: 위젯 클릭\n- 중형 위젯: 위젯에서 \"QR 체크인\" 클릭", options)
+    let req = new Request(reqUrl)
+    req.timeoutInterval = 5
+    target = await req.loadJSON()
     
-    if(alert != -1){
-      mData.qrSchemeKeyword = Object.keys(qrCheckInScheme)[alert]
-      refreshElements(table)
+    target.timestamp = dataTime
+    
+    fm.writeString(path, JSON.stringify(target))
+  } catch(e){
+    if(fm.fileExists(path)){
+      target = JSON.parse(fm.readString(path))
+    } else {
+      throw new Error("데이터를 불러오는 중 문제가 발생했습니다.")
     }
   }
   
-  let qrCheckInSelectionText = qrCheckInMaster[1]
-  qrCheckInSelectionText.widthWeight = 80
-  
-  let qrCheckInTester = UITableCell.button("테스트")
-  qrCheckInTester.widthWeight = 20
-  qrCheckInTester.rightAligned()
-  qrCheckInSelection.addCell(qrCheckInTester)
-  
-  qrCheckInTester.onTap = () => {
-    Safari.open(qrCheckInScheme[mData.qrSchemeKeyword][1])
-  }
-  
-  let fontDebugMaster = elementsText(65, false, "공지사항", "코로나 알파에 관한 소식을 확인하실 수 있어요.", 14, 13, table)
-
-  let fontDebugElement = fontDebugMaster[0]
-  
-  fontDebugElement.onSelect = () => {
-    Safari.openInApp("https://www.scriptable-kr.app/ca-annc")
-  }
-  
-  let widgetVersionMaster = elementsText(65, false, "위젯 버전", version, 14, 13, table)
-
-  let widgetVersion = widgetVersionMaster[0]
+  return target
 }
 
-function refreshElements(table){
-  table.removeAllRows()
-  loadElements(table)
-  table.reload()
-}
+let liveDom = await loadData(`${dataUrl}/domestic/live.json?timestamp=${dataTime}`, "livedom")
 
-async function showLauncher(){
-  let table = new UITable()
-  table.showSeparators = true
-  loadElements(table)
-  await table.present(false)
-}
+let statDom = await loadData(`${dataUrl}/domestic/stat.json?timestamp=${dataTime}`, "statdom")
 
-if(config.runsInApp){
-  await showLauncher()
-  await writeJSON(mPath, mData)
-}
-
-
-
-
-const addComma = (number) => {
-  return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-}
-
-const getLinearGradient = (color1, color2) => {
-  let lg = new LinearGradient()
-  color1 = new Color(color1)
-  color2 = new Color(color2)
-  lg.colors = [color1, color2]
-  lg.locations = [0, 1]
-  lg.startPoint = new Point(0,0)
-  lg.endPoint = new Point(1,1)
-  
-  return lg
-}
-
-const addText = (content, font, textColor, target, alignCenter) => {
-  let st
-  if(alignCenter){
-    st = target.addStack()
-    target = st
-    st.addSpacer()
-  }
-  
-  let obj = target.addText(content)
-  obj.font = font
-  obj.textColor = textColor
-  
-  if(alignCenter){ st.addSpacer() }
-  
-  return obj
-}
+let liveLoc; let statLoc;
 
 const gapLayout = (value, target, fixedColor) => {
-  let selectedColor = fixedColor ? fixedColor : (value > 0 ? uicolors.red : uicolors.blue)
+  let selectedColor = fixedColor ? fixedColor : (value > 0 ? "EB5374" : "5673EB")
   
   let bx1 = target.addStack()
   bx1.centerAlignContent()
@@ -329,237 +282,347 @@ const gapLayout = (value, target, fixedColor) => {
 
   bx1.backgroundColor = new Color(selectedColor, 0.2)
 
-  let gapTx = addText(
-  content = value ? `${value > 0 ? "+" : ""}${addComma(value)}` : "-",
-  font = new Font(uifonts.medium, 12),
-  textColor = new Color(selectedColor),
-  target = bx1)
+  let gapTx = bx1.addText(value ? `${value > 0 ? "+" : ""}${value.toLocaleString()}` : "-")
+  gapTx.font = fontMedium(12)
+  gapTx.textColor = new Color(selectedColor)
 }
 
 const addGapBlock = (string, value, target) => {
   let stgap = target.addStack()
   stgap.centerAlignContent()
 
-  let stDescTx = addText(
-  content = string,
-  font = new Font(uifonts.medium, 12),
-  textColor = new Color(uicolors.tx01, 0.8),
-  target = stgap)
+  let stDescTx = stgap.addText(string)
+  stDescTx.font = fontMedium(11)
+  stDescTx.textColor = new Color("ffffff", 0.8)
 
   stgap.addSpacer(5)
 
   gapLayout(value, stgap)
 }
 
+const UIdsOrigin = {
+  "ds01": ["실시간", "New cases"],
+  "ds02": ["명", ""],
+  "ds04": ["집계 중", "No Data"],
+  "ds11": ["vs 어제", "vs 1Day"],
+  "ds12": ["vs 1주전", "vs 1Week"],
+  "ds13": ["어제 총합", "Prev 1D"],
+  "ds05": ["확진자", "Confirmed"],
+  "ds15": ["확진자", "Total"],
+  "ds20": ["방역 패스", "QR Check-in"],
+  "ds30": ["어제 입원환자", "Inpatient 1D"],
+  "ds31": ["어제 위중증자", "ICU Prev 1D"],
+}
 
-// 위젯 레이아웃
-const smallLayout = () => {
+let UIDataSet = {}
+let lcode = useEnglishUI ? 1 : 0
+for(ds in UIdsOrigin){
+  UIDataSet[ds] = UIdsOrigin[ds][lcode]
+}
+
+function loadWidget(){
   let widget = new ListWidget()
   
-  // 라이브 확진자 수
-  let descTx = addText(
-  content = "코로나19",
-  font = new Font(uifonts.medium, 13),
-  textColor = new Color(uicolors.tx01),
-  target = widget)
+  let df = new DateFormatter()
+  df.locale = useEnglishUI ? "en" : "ko-kr"
+  df.useShortTimeStyle()
   
-  descTx.centerAlignText()
+  let titleText = widget.addText(`${UIDataSet.ds01} | ${df.string(new Date(liveDom.timestamp))}`)
+  titleText.font = fontMedium(11)
+  titleText.textColor = new Color("ffffff")
+  titleText.centerAlignText()
   
-  let liveConfirmed = liveDom.live.today
+  widget.addSpacer(2.5)
   
-  let st1 = widget.addStack()
-  st1.centerAlignContent()
-  st1.addSpacer()
+  let liveStack = widget.addStack()
+  liveStack.layoutHorizontally()
+  liveStack.centerAlignContent()
   
-  let liveConfirmedTx = addText(
-  content = addComma(liveConfirmed),
-  font = new Font(uifonts.medium, liveConfirmed >= 100000 ? 25 : 27),
-  textColor = new Color(uicolors.tx01),
-  target = st1)
+  liveStack.addSpacer()
   
-  st1.addSpacer(2)
+  let liveConfirmed = liveStack.addText(liveDom.live.today.toLocaleString())
+  liveConfirmed.font = fontBold(23)
+  liveConfirmed.textColor = new Color("ffffff")
   
-  let unitTx = addText(
-  content = "명",
-  font = new Font(uifonts.medium, 14),
-  textColor = new Color(uicolors.tx01),
-  target = st1)
+  let liveUnit = liveStack.addText(UIDataSet.ds02)
+  liveUnit.font = fontMedium(17)
+  liveUnit.textColor = new Color("ffffff")
   
-  st1.addSpacer()
+  liveStack.addSpacer()
+  
+  widget.addSpacer(5)
   
   // 어제 총합
   let confirmed1 = statDom.overview.confirmed[1]
   
-  if(confirmed1){
-    widget.addSpacer(3)
-    
-    let stys = widget.addStack()
-    stys.addSpacer()
-    
-    gapLayout(confirmed1, stys)
-    
-    stys.addSpacer()
-  } else {
-    let nullTx = addText(
-    content = "확진자 집계중",
-    font = new Font(uifonts.bold, 11),
-    textColor = new Color(uicolors.gray),
-    target = widget, true)
-    
-    widget.addSpacer(2)
+  // 동시간대 차이
+  let yesterdayGap = liveDom.live.today - liveDom.live.yesterday
+  let weekGap = liveDom.live.today - liveDom.live.weekAgo
+  
+  function addRow(title, message){
+  
+  let stack = widget.addStack()
+  stack.layoutHorizontally()
+  stack.centerAlignContent()
+  stack.setPadding(0,11,0,11)
+  
+  let titleText = stack.addText(title)
+  titleText.font = fontMedium(11)
+  titleText.textColor = new Color("ffffff", 0.8)
+  
+  stack.addSpacer()
+  
+  let messageText = stack.addText(message)
+  messageText.font = fontBold(12)
+  messageText.textColor = new Color("ffffff")
+  
   }
   
-  widget.addSpacer(15)
+  addRow(UIDataSet.ds13, confirmed1 ? `${confirmed1.toLocaleString()}${UIDataSet.ds02}` : UIDataSet.ds04)
+
+  widget.addSpacer(10)
   
-  // 동시간대 차이
-  let yesterdayGap = liveConfirmed - liveDom.live.yesterday
-  let weekGap = liveConfirmed - liveDom.live.weekAgo
+  let st1 = widget.addStack()
+  st1.setPadding(0,11,0,0)
   
-  addGapBlock("vs 어제", yesterdayGap, widget)
+  addGapBlock(UIDataSet.ds11, yesterdayGap, st1)
   
   widget.addSpacer(4)
   
-  addGapBlock("vs 1주전", weekGap, widget)
+  let st2 = widget.addStack()
+  st2.setPadding(0,11,0,0)
+  
+  addGapBlock(UIDataSet.ds12, weekGap, st2)
+  
+  
+  widget.backgroundColor = new Color("0E172A")
+
+  widget.url = passArr[dataPass][1]
   
   widget.refreshAfterDate = new Date(Date.now() + 1000 * 120)
-  widget.backgroundColor = new Color(uicolors.bg01)
-  widget.url = qrCheckInScheme[mData.qrSchemeKeyword][1]
-
-  widget.setPadding(15,10,15,10)
+  widget.setPadding(0,0,0,0)
   return widget
 }
 
-const mediumLayout = () => {
+async function loadMediumWidget(){
   let widget = new ListWidget()
   
-  let blocks = widget.addStack()
-  blocks.layoutHorizontally()
-  
-  const addSegment = (title, value, gapvalue, color, forLargeValue) => {
-    let block = blocks.addStack()
-    block.layoutVertically()
+  if(loadRegionData){
+    liveLoc = await loadData(`${dataUrl}/domestic/${dataRegion}/live.json?timestamp=${dataTime}`, "liveLoc")
     
-    block.size = new Size(94,0)
-    block.backgroundColor = new Color(uicolors.bg02)
-    block.cornerRadius = 10
-    
-    block.addSpacer()
-    
-    let descTx = addText(
-    content = title,
-    font = new Font(uifonts.medium, 12),
-    textColor = new Color(uicolors.gray),
-    target = block, true)
-    
-    let liveConfirmedTx = addText(
-    content = forLargeValue ? (value/1000000).toFixed(2) + "백만" : addComma(value),
-    font = new Font(uifonts.bold, 18),
-    textColor = new Color(color),
-    target = block, true)
-    
-    block.addSpacer(3)
-  
-    let stys = block.addStack()
-    stys.addSpacer()
-    
-    gapLayout(gapvalue, stys, color)
-    
-    stys.addSpacer()
-    
-    block.addSpacer()
+    statLoc = await loadData(`${dataUrl}/domestic/${dataRegion}/stat.json?timestamp=${dataTime}`, "statLoc")
   }
   
-  let confirmed0 = statDom.overview.confirmed[0]
+  let hstack = widget.addStack()
+  hstack.layoutHorizontally()
+  
+  let leftv = hstack.addStack()
+  leftv.layoutVertically()
+  
+  let mainh = leftv.addStack()
+  mainh.backgroundColor = new Color("182133")
+  mainh.cornerRadius = 13
+  mainh.setPadding(8,8,5,8)
+  
+  mainh.url = "https://corona-live.com"
+  
+  let mainv = mainh.addStack()
+  mainv.layoutVertically()
+  
+  let df = new DateFormatter()
+  df.locale = useEnglishUI ? "en" : "ko-kr"
+  df.useShortTimeStyle()
+  
+  let titleText = mainv.addText(`${UIDataSet.ds01} | ${df.string(new Date(liveDom.timestamp))}`)
+  titleText.font = fontMedium(11)
+  titleText.textColor = new Color("ffffff")
+  
+  mainv.addSpacer(2)
+  
+  let liveStack = mainv.addStack()
+  liveStack.centerAlignContent()
+  
+  let liveConfirmed = liveStack.addText(liveDom.live.today.toLocaleString())
+  liveConfirmed.font = fontBold(23)
+  liveConfirmed.textColor = new Color("ffffff")
+
+  let liveUnit = liveStack.addText(UIDataSet.ds02)
+  liveUnit.font = fontMedium(23)
+  liveUnit.textColor = new Color("ffffff")
+  
+  
+  leftv.addSpacer(8)
+  
+  let stath = leftv.addStack()
+  stath.backgroundColor = new Color("182133")
+  stath.cornerRadius = 13
+  stath.setPadding(8,8,8,8)
+  
+  stath.url = passArr[dataPass][1]
+  
+  let statv0 = stath.addStack()
+  statv0.layoutVertically()
+  statv0.addSpacer()
+  
+  let statv = stath.addStack()
+  statv.layoutVertically()
+  
+  // 어제 총합
   let confirmed1 = statDom.overview.confirmed[1]
   
-  addSegment("확진자", confirmed0, confirmed1, uicolors.red, true)
-  blocks.addSpacer(7)
-
-  let deceased0 = statDom.overview.deceased[0]
-  let deceased1 = statDom.overview.deceased[1]
-
-  addSegment("사망자", deceased0, deceased1, uicolors.darkgray)
-  blocks.addSpacer(7)
-  
-  let recovered0 = statDom.overview.recovered[0]
-  let recovered1 = statDom.overview.recovered[1]
-
-  addSegment("완치자", recovered0, recovered1, uicolors.blue)
-  
-  widget.addSpacer(7)
-  
-  let bottom = widget.addStack()
-  bottom.layoutHorizontally()
-  
-  let stlive = bottom.addStack()
-  stlive.size = new Size(144.5, 35)
-  stlive.backgroundColor = new Color(uicolors.bg02)
-  stlive.cornerRadius = 10
-  
-  stlive.centerAlignContent()
-  
-  let liveConfirmed = liveDom.live.today
-  
-  let liveTx = addText(
-  content = `${addComma(liveConfirmed)}명 `,
-  font = new Font(uifonts.bold, 13),
-  textColor = new Color(uicolors.gray),
-  target = stlive)
-  
   // 동시간대 차이
-  let yesterdayGap = liveConfirmed - liveDom.live.yesterday
-  gapLayout(yesterdayGap, stlive)
+  let yesterdayGap = liveDom.live.today - liveDom.live.yesterday
+  let weekGap = liveDom.live.today - liveDom.live.weekAgo
+
+  // 국내 확진자 총합
+  let confirmed0 = statDom.overview.confirmed[0]
+
+  let stath1 = statv.addStack()
+  stath1.centerAlignContent()
+  let statT0 = stath1.addText(`${UIDataSet.ds13} `)
+  statT0.font = fontMedium(12)
+  statT0.textColor = new Color("ffffff", 0.6)
   
-  bottom.addSpacer(7)
+  let statT1 = stath1.addText(confirmed1 ? `${confirmed1.toLocaleString()}` : UIDataSet.ds04)
+  statT1.font = fontBold(13)
+  statT1.textColor = new Color("ffffff")
   
-  let stqr = bottom.addStack()
-  stqr.size = new Size(144.5, 35)
-  stqr.backgroundColor = new Color(uicolors.bg02)
-  stqr.cornerRadius = 10
+  let stath2 = statv.addStack()
+  stath2.centerAlignContent()
+  let statT3 = stath2.addText(`${UIDataSet.ds05} `)
+  statT3.font = fontMedium(12)
+  statT3.textColor = new Color("ffffff", 0.6)
   
-  stqr.centerAlignContent()
+  let statT4 = stath2.addText(`${confirmed0.toLocaleString()}`)
+  statT4.font = fontBold(13)
+  statT4.textColor = new Color("EB5374")
   
-  let qricon = stqr.addImage(SFSymbol.named("qrcode").image)
-  qricon.tintColor = new Color(uicolors.darkgray)
-  qricon.imageSize = new Size(14,14)
+  statv.addSpacer(2)
   
-  let qrdescTx = addText(
-  content = " QR 체크인",
-  font = new Font(uifonts.bold, 12),
-  textColor = new Color(uicolors.gray),
-  target = stqr)
+  let stath3 = statv.addStack()
+  stath3.centerAlignContent()
+  let statI1 = stath3.addImage(SFSymbol.named("qrcode").image)
+  statI1.imageSize = new Size(14,14)
+  statI1.tintColor = new Color("ffffff")
+  stath3.addSpacer(2)
   
-  stqr.url = qrCheckInScheme[mData.qrSchemeKeyword][1]
+  let statT5 = stath3.addText(UIDataSet.ds20)
+  statT5.font = fontMedium(11)
+  statT5.textColor = new Color("ffffff")
   
+  mainh.addSpacer()
+  stath.addSpacer()
+  
+  hstack.addSpacer(9)
+  
+  let subh = hstack.addStack()
+  subh.size = new Size(subWidth, 0)
+  subh.backgroundColor = new Color("182133")
+  subh.cornerRadius = 13
+  subh.setPadding(8,8,8,8)
+  
+  subh.url = `https://corona-live.com/city/${dataRegion}/`
+  
+  let subv0 = subh.addStack()
+  subv0.layoutVertically()
+  subv0.addSpacer()
+  
+  let subv = subh.addStack()
+  subv.layoutVertically()
+  
+  let subh1 = subv.addStack()
+  subh1.centerAlignContent()
+  let subT1 = subh1.addText(`${useEnglishUI ? regionArrEn[dataRegion] : regionArr[dataRegion]} | ${df.string(new Date(liveLoc.timestamp))}`)
+  subT1.font = fontMedium(11)
+  subT1.textColor = new Color("ffffff")
+  
+  subv.addSpacer(2)
+  
+  let liveStack2 = subv.addStack()
+  liveStack2.centerAlignContent()
+  
+  let liveConfirmed2 = liveStack2.addText(liveLoc.live.today.toLocaleString())
+  liveConfirmed2.font = fontBold(23)
+  liveConfirmed2.textColor = new Color("ffffff")
+
+  let liveUnit2 = liveStack2.addText(UIDataSet.ds02)
+  liveUnit2.font = fontMedium(23)
+  liveUnit2.textColor = new Color("ffffff")
+  
+  // 지역 누적 확진자
+  let locConf0 = statLoc.overview.confirmed[0]
+  
+  // 지역 어제 확진자
+  let locConf1 = statLoc.overview.confirmed[1]
+
+  let subh3 = subv.addStack()
+  subh3.centerAlignContent()
+  let subT5 = subh3.addText(`${UIDataSet.ds13} `)
+  subT5.font = fontMedium(12)
+  subT5.textColor = new Color("ffffff", 0.6)
+  
+  let subT6 = subh3.addText(`${locConf1.toLocaleString()}`)
+  subT6.font = fontBold(13)
+  subT6.textColor = new Color("ffffff")
+  
+  let subh2 = subv.addStack()
+  subh2.centerAlignContent()
+  let subT3 = subh2.addText(`${UIDataSet.ds15} `)
+  subT3.font = fontMedium(12)
+  subT3.textColor = new Color("ffffff", 0.6)
+  
+  let subT4 = subh2.addText(`${locConf0.toLocaleString()}`)
+  subT4.font = fontBold(13)
+  subT4.textColor = new Color("EB5374")
+  
+  subv.addSpacer(5)
+  
+  // 입원환자 증감
+  let hospd1 = statDom.overview.hospitalised[1]
+  
+  let stath5 = subv.addStack()
+  stath5.centerAlignContent()
+  let statT7 = stath5.addText(`${UIDataSet.ds30} `)
+  statT7.font = fontMedium(12)
+  statT7.textColor = new Color("ffffff", 0.6)
+  
+  let statT8 = stath5.addText(`${hospd1 >= 0 ? "+" : ""}${hospd1.toLocaleString()}`)
+  statT8.font = fontBold(13)
+  statT8.textColor = new Color("5673EB")
+  
+  // 위중증자 증감
+  let crit1 = statDom.overview.confirmedCritical[1]
+  
+  let stath6 = subv.addStack()
+  stath6.centerAlignContent()
+  let statT9 = stath6.addText(`${UIDataSet.ds31} `)
+  statT9.font = fontMedium(12)
+  statT9.textColor = new Color("ffffff", 0.6)
+  
+  let statTA = stath6.addText(`${crit1 >= 0 ? "+" : ""}${crit1.toLocaleString()}`)
+  statTA.font = fontBold(13)
+  statTA.textColor = new Color("CFCFCF")
+  
+  subh.addSpacer()
+  
+  widget.backgroundColor = new Color("0E172A")
+
   widget.refreshAfterDate = new Date(Date.now() + 1000 * 120)
-  widget.backgroundColor = new Color(uicolors.bg01)
+  widget.setPadding(layoutPadding[0], layoutPadding[2], layoutPadding[1], layoutPadding[3])
   
-  widget.url = "https://corona-live.com"
   return widget
 }
 
-const errorLayout = (message) => {
-  let widget = new ListWidget()
-  
-  let errorTx = widget.addText(message)
-  errorTx.font = new Font(uifonts.bold, 16)
-  errorTx.textColor = new Color(uicolors.tx01)
-  
-  errorTx.centerAlignText()
-  
-  widget.backgroundColor = new Color(uicolors.bg01)
-  return widget
-}
-
-await checkUpdate()
-
+let widget
 if(config.runsInWidget){
-  let size = config.widgetFamily
-  let supports = ["small", "medium"]
-  let widget = supports.includes(size) ? eval(`${size}Layout()`) : errorLayout("해당 위젯 사이즈는 지원하지 않습니다.")
+  if(config.widgetFamily == "small"){
+    widget = loadWidget()
+  } else if(config.widgetFamily == "medium"){
+    widget = await loadMediumWidget()
+  }
   
   Script.setWidget(widget)
-} else if(config.runsInApp){
-  let widget = mediumLayout()
+} else {
+  widget = await loadMediumWidget()
   widget.presentMedium()
 }
