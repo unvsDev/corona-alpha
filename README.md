@@ -13,7 +13,7 @@
 - 홈 화면에서 위젯을 탭해서 QR 체크인으로 빠르게 이동할 수 있습니다.
 - 위젯 편집기를 앱 내에서 제공합니다.
 <div>
-<img width="266" src="https://user-images.githubusercontent.com/63099769/147398816-b0659db7-1b57-49ec-ab9f-e0deaf0f5967.jpg">
+<img width="300" src="https://user-images.githubusercontent.com/63099769/156920562-d5c30acd-d446-4a2d-bd1e-d233dc139845.jpeg">
 </div>
 
 ## Announcement
