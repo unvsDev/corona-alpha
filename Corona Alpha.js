@@ -5,7 +5,7 @@
 // 위젯 파일 및 제공되는 코드의 무단 재배포, 공유 및 판매는 엄격히 금지됩니다.
 
 
-const version = "4.0"
+const version = "4.1"
 
 const subWidth = 140
 // Medium 위젯에서 우측 블럭의 너비
@@ -21,6 +21,7 @@ let prefs = {
   "lang": 0,
   "region": 0,
   "pass": "naver",
+  "via": "livemain",
 }
 
 const source = "https://raw.githubusercontent.com/unvsDev/corona-alpha/main/Corona%20Alpha.js"
@@ -59,6 +60,14 @@ if(await isDeviceOnline()){
 
 const regionArr = ['서울', '부산', '인천', '대구', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '경북', '경남', '전북', '전남', '제주']
 const regionArrEn = ['Seoul', 'Busan', 'Incheon', 'Daegu', 'Gwangju', 'Daejeon', 'Ulsan', 'Sejong', 'Gyeonggi', 'Gangwon', 'Chungbuk', 'Chungnam', 'Gyeongbuk', 'Gyeongnam', 'Jeonbuk', 'Jeonnam', 'Jeju']
+
+const viaArr = {
+  "livemain": ["코로나 라이브 | 국내", "https://corona-live.com"],
+  "liveint": ["코로나 라이브 | 세계", "https://corona-live.com/world/"],
+  "livevac": ["코로나 라이브 | 백신", "https://corona-live.com/vaccine/"],
+  "gov": ["보건복지부 코로나19", "http://ncov.mohw.go.kr"],
+  "jhuint": ["Johns Hopkins CSSE", "https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6"],
+}
 
 const passArr = {
   "naver": ["네이버", "naversearchapp://opennadot?cardId=QRCheckIn"],
@@ -166,7 +175,7 @@ async function showTable(){
     text4.titleFont = Font.boldSystemFont(15)
     text4.subtitleFont = Font.systemFont(14)
     
-    table.addRow(row4)
+    // table.addRow(row4)
     
     row4.onSelect = async () => {
       let opt = new UITable()
@@ -183,6 +192,39 @@ async function showTable(){
         
         bt.onSelect = (number) => {
           prefs.pass = Object.keys(passArr)[number]
+        }
+      }
+      
+      await opt.present()
+      refreshTable()
+    }
+    
+    let row7 = new UITableRow()
+    row7.height = 70
+    row7.dismissOnSelect = false
+    
+    let text7 = row7.addText(`🤖 연결 페이지: ${viaArr[prefs.via][0]}`, "위젯에서 빠르게 관련 사이트로 이동할 수 있습니다.")
+
+    text7.titleFont = Font.boldSystemFont(15)
+    text7.subtitleFont = Font.systemFont(14)
+    
+    table.addRow(row7)
+    
+    row7.onSelect = async () => {
+      let opt = new UITable()
+      opt.showSeparators = true
+      
+      for(index in viaArr){
+        let bt = new UITableRow()
+        bt.height = 55
+        
+        let text = bt.addText(`${viaArr[index][0]}`)
+        text.titleFont = Font.boldSystemFont(15)
+        
+        opt.addRow(bt)
+        
+        bt.onSelect = (number) => {
+          prefs.via = Object.keys(viaArr)[number]
         }
       }
       
@@ -397,7 +439,7 @@ function loadWidget(){
   
   widget.backgroundColor = new Color("0E172A")
 
-  widget.url = passArr[dataPass][1]
+  widget.url = viaArr[prefs.via][1]
   
   widget.refreshAfterDate = new Date(Date.now() + 1000 * 120)
   widget.setPadding(0,0,0,0)
@@ -458,7 +500,8 @@ async function loadMediumWidget(){
   stath.cornerRadius = 13
   stath.setPadding(8,8,8,8)
   
-  stath.url = passArr[dataPass][1]
+  // stath.url = passArr[dataPass][1]
+  stath.url = viaArr[prefs.via][1]
   
   let statv0 = stath.addStack()
   statv0.layoutVertically()
@@ -501,12 +544,12 @@ async function loadMediumWidget(){
   
   let stath3 = statv.addStack()
   stath3.centerAlignContent()
-  let statI1 = stath3.addImage(SFSymbol.named("qrcode").image)
+  let statI1 = stath3.addImage(SFSymbol.named("link").image)
   statI1.imageSize = new Size(14,14)
   statI1.tintColor = new Color("ffffff")
   stath3.addSpacer(2)
   
-  let statT5 = stath3.addText(UIDataSet.ds20)
+  let statT5 = stath3.addText(viaArr[prefs.via][0])
   statT5.font = fontMedium(11)
   statT5.textColor = new Color("ffffff")
   
