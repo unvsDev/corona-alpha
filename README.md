@@ -29,7 +29,7 @@
 </div>
 
 ## Download
-[위젯 다운로드 (v5.0)](https://github.com/unvsDev/corona-alpha/releases/download/5.0/CoronaAlpha.scriptable) | [개발자 문의/피드백](https://discord.gg/BCP2S7BdaC)
+[위젯 다운로드 (v5.0.1)](https://github.com/unvsDev/corona-alpha/releases/download/5.0.1/CoronaAlpha.scriptable) | [개발자 문의/피드백](https://discord.gg/BCP2S7BdaC)
 
 ## Widget
 - iOS 14 이상에서 사용할 수 있는 [Scriptable](https://apps.apple.com/kr/app/scriptable/id1405459188) 위젯입니다.
