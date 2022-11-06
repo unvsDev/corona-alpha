@@ -1,14 +1,14 @@
 // Variables used by Scriptable.
 // These must be at the very top of the file. Do not edit.
 // icon-color: purple; icon-glyph: bullhorn;
-// Corona Alpha 5.0 - by unvsDev
+// Corona Alpha v5 - by unvsDev
 // Korea Covid-19 Information for Scriptable
 
 // 서울, 부산, 대구, 인천, 광주, 대전, 울산, 세종, 경기, 강원, 충북, 충남, 전북, 전남, 경북, 경남, 제주, 검역
 // 관심지역을 최대 4개까지 설정할 수 있습니다.
 const USER_CITY = ["서울", "부산", "대구", "인천"]
 
-const VERSION = "5.0"
+const VERSION = "5.0.1"
 
 const GIST_ID = "unvsDev/f5a2db2046629f6352c0b8c616f8a458"
 const DATA_URL = "https://gist.githubusercontent.com/" + GIST_ID + "/raw/covidData.json"
@@ -30,6 +30,7 @@ try{
 
 if(cache.widgetVersion != VERSION){
   try{
+    let fm = FileManager.iCloud()
     let source = await new Request(cache.widgetSource).loadString()
     await fm.writeString(fm.documentsDirectory() + "/" + Script.name() + ".js", source)
   } catch(e){ }
@@ -43,21 +44,25 @@ if(config.runsInApp || config.widgetFamily == "small"){
   
   let baseText1 = stack1.addText("전국")
   baseText1.font = Font.boldSystemFont(12)
+  baseText1.textColor = new Color("ffffff")
   
   stack1.addSpacer(4)
   
   let baseText2 = stack1.addText("어제 확진자")
   baseText2.font = Font.systemFont(12)
   baseText2.textOpacity = 0.8
+  baseText2.textColor = new Color("ffffff")
   
   let prevConfirmedText = widget.addText(cache['합계'].prevConfirmed[0].toLocaleString())
   prevConfirmedText.font = Font.lightSystemFont(30)
+  prevConfirmedText.textColor = new Color("ffffff")
   
   widget.addSpacer(5)
   
   let totalConfirmedText = widget.addText("총 " + cache['합계'].totalConfirmed.toLocaleString() + "명")
   totalConfirmedText.font = Font.boldSystemFont(13)
   totalConfirmedText.textOpacity = 0.8
+  totalConfirmedText.textColor = new Color("ffffff")
   
   let df = new DateFormatter()
   df.dateFormat = "yyyyMMddHHmm"
@@ -70,6 +75,7 @@ if(config.runsInApp || config.widgetFamily == "small"){
   let dataTimeText = widget.addText(df2.string(df.date(cache.dataTime)))
   dataTimeText.font = Font.systemFont(13)
   dataTimeText.textOpacity = 0.8
+  dataTimeText.textColor = new Color("ffffff")
   
   widget.addSpacer()
   
@@ -78,16 +84,19 @@ if(config.runsInApp || config.widgetFamily == "small"){
   
   let baseText3 = stack2.addText(USER_CITY[0])
   baseText3.font = Font.boldSystemFont(12)
+  baseText3.textColor = new Color("ffffff")
   
   stack2.addSpacer(4)
   
   let baseText4 = stack2.addText("어제 ")
   baseText4.font = Font.systemFont(12)
   baseText4.textOpacity = 0.8
+  baseText4.textColor = new Color("ffffff")
   
   let cityPrevText = stack2.addText(cache[USER_CITY[0]].prevConfirmed[0].toLocaleString() + "명")
   cityPrevText.font = Font.boldSystemFont(12)
   cityPrevText.textOpacity = 0.8
+  cityPrevText.textColor = new Color("ffffff")
   
 } else if(config.widgetFamily == "medium"){
   let hStack = widget.addStack()
@@ -103,15 +112,18 @@ if(config.runsInApp || config.widgetFamily == "small"){
   
   let baseText1 = stack1.addText("전국")
   baseText1.font = Font.boldSystemFont(12)
+  baseText1.textColor = new Color("ffffff")
   
   stack1.addSpacer(4)
   
   let baseText2 = stack1.addText("어제 확진자")
   baseText2.font = Font.systemFont(12)
   baseText2.textOpacity = 0.8
+  baseText2.textColor = new Color("ffffff")
   
   let prevConfirmedText = vStack1.addText(cache['합계'].prevConfirmed[0].toLocaleString())
   prevConfirmedText.font = Font.lightSystemFont(30)
+  prevConfirmedText.textColor = new Color("ffffff")
   
   vStack1.addSpacer(5)
   
@@ -126,10 +138,12 @@ if(config.runsInApp || config.widgetFamily == "small"){
   let baseText3 = stack2.addText("10만 명당 ")
   baseText3.font = Font.boldSystemFont(12)
   baseText3.textOpacity = 0.8
+  baseText3.textColor = new Color("ffffff")
   
   let confirmedRateText = stack2.addText(cache['합계'].confirmedPer100k.toLocaleString() + "명")
   confirmedRateText.font = Font.systemFont(12)
   confirmedRateText.textOpacity = 0.8
+  confirmedRateText.textColor = new Color("ffffff")
   
   vStack1.addSpacer(4)
   
@@ -139,10 +153,12 @@ if(config.runsInApp || config.widgetFamily == "small"){
   let baseText4 = stack3.addText("사망자 ")
   baseText4.font = Font.boldSystemFont(12)
   baseText4.textOpacity = 0.8
+  baseText4.textColor = new Color("ffffff")
   
   let totalDeceasedText = stack3.addText(cache['합계'].totalDeceased.toLocaleString() + "명")
   totalDeceasedText.font = Font.systemFont(12)
   totalDeceasedText.textOpacity = 0.8
+  totalDeceasedText.textColor = new Color("ffffff")
   
   vStack1.addSpacer(4)
   
@@ -152,10 +168,12 @@ if(config.runsInApp || config.widgetFamily == "small"){
   let baseText5 = stack4.addText("총 확진 ")
   baseText5.font = Font.boldSystemFont(12)
   baseText5.textOpacity = 0.8
+  baseText5.textColor = new Color("ffffff")
   
   let totalConfirmedText = stack4.addText(cache['합계'].totalConfirmed.toLocaleString() + "명")
   totalConfirmedText.font = Font.systemFont(12)
   totalConfirmedText.textOpacity = 0.8
+  totalConfirmedText.textColor = new Color("ffffff")
   
   vStack1.addSpacer()
   
@@ -168,6 +186,7 @@ if(config.runsInApp || config.widgetFamily == "small"){
   let dataTimeText = vStack1.addText(df2.string(df.date(cache.dataTime)))
   dataTimeText.font = Font.systemFont(10)
   dataTimeText.textOpacity = 0.8
+  dataTimeText.textColor = new Color("ffffff")
   
   let vStack2 = hStack.addStack()
   vStack2.layoutVertically()
@@ -177,10 +196,12 @@ if(config.runsInApp || config.widgetFamily == "small"){
     
     let cityName = cityStack.addText(USER_CITY[i] + " ")
     cityName.font = Font.boldSystemFont(12)
+    cityName.textColor = new Color("ffffff")
     
     let cityPrevText = cityStack.addText(cache[USER_CITY[i]].prevConfirmed[0].toLocaleString() + "명 ")
     cityPrevText.font = Font.lightMonospacedSystemFont(12)
     cityPrevText.textOpacity = 0.8
+    cityPrevText.textColor = new Color("ffffff")
     
     let symbol2 = cityStack.addImage(SFSymbol.named("person.2.fill").image)
     symbol2.tintColor = new Color("ffffff")
@@ -190,6 +211,7 @@ if(config.runsInApp || config.widgetFamily == "small"){
     let cityConfirmedRateText = cityStack.addText(cache[USER_CITY[i]].confirmedPer100k.toLocaleString() + "명")
     cityConfirmedRateText.font = Font.mediumMonospacedSystemFont(12)
     cityConfirmedRateText.textOpacity = 0.8
+    cityConfirmedRateText.textColor = new Color("ffffff")
     
     vStack2.addSpacer(7)
   }
@@ -208,6 +230,7 @@ if(config.runsInApp || config.widgetFamily == "small"){
   let baseText6 = stack5.addText(" 질병관리청 • 코로나19")
   baseText6.font = Font.systemFont(12)
   baseText6.textOpacity = 0.8
+  baseText6.textColor = new Color("ffffff")
   
 } else if(config.widgetFamily == "accessoryRectangular"){
   let stack1 = widget.addStack()
